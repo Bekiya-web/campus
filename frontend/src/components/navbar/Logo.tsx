@@ -11,7 +11,7 @@ export const Logo = ({ isLoggedIn }: LogoProps) => {
       <div className="h-9 w-9 rounded-xl bg-gradient-primary flex items-center justify-center shadow-soft transition-smooth">
         <GraduationCap className="h-5 w-5 text-white" />
       </div>
-      <span className="font-extrabold text-lg tracking-tight text-foreground">Campus Helper</span>
+      <span className="font-extrabold text-lg tracking-tight text-foreground">EduNexus</span>
     </Link>
   );
 };

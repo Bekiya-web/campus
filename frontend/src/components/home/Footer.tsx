@@ -19,7 +19,7 @@ export const Footer = () => {
                 <GraduationCap className="h-5 w-5 text-foreground" />
               </div>
               <div>
-                <p className="text-xl font-black">Campus Helper</p>
+                <p className="text-xl font-black">EduNexus</p>
                 <p className="text-xs font-semibold text-muted-foreground">Professional student collaboration platform</p>
               </div>
             </div>
@@ -73,7 +73,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Campus Helper. Built for Ethiopian students.</p>
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} EduNexus. Built for Ethiopian students.</p>
           <div className="flex items-center gap-3">
             <a href="mailto:support@campushelper.et" className="rounded-lg border border-border p-2 text-muted-foreground hover:text-foreground"><Mail className="h-4 w-4" /></a>
             <a href="https://campushelper.et" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-border p-2 text-muted-foreground hover:text-foreground"><Globe className="h-4 w-4" /></a>

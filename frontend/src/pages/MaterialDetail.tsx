@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/RatingStars";
+import { MaterialMessaging } from "@/components/MaterialMessaging";
+import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { Loader2, Download, ArrowLeft, FileText, User, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
@@ -102,12 +104,22 @@ const MaterialDetail = () => {
               )}
             </div>
           </div>
-          <Button
-            onClick={handleDownload}
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-soft font-semibold shrink-0"
-          >
-            <Download className="h-4 w-4 mr-2" /> Download
-          </Button>
+          <div className="flex flex-col gap-3 shrink-0">
+            <Button
+              onClick={handleDownload}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-soft font-semibold"
+            >
+              <Download className="h-4 w-4 mr-2" /> Download
+            </Button>
+            
+            {/* New messaging and feature request buttons */}
+            {user && (
+              <>
+                <MaterialMessaging material={material} />
+                <FeatureRequestDialog material={material} />
+              </>
+            )}
+          </div>
         </div>
       </Card>
 

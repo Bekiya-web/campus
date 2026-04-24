@@ -5,7 +5,7 @@ import { logoutUser } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import {
   GraduationCap, LayoutDashboard, Upload, BookOpen, Sun, Moon,
-  Sparkles, Bot, Calculator, Menu, X,
+  Sparkles, Bot, Calculator, Menu, X, MessageSquare, Shield, Inbox,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchNotifications, markNotificationRead } from "@/services/notificationService";
@@ -56,7 +56,10 @@ export function Navbar() {
         { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { to: "/materials", label: "Materials",  icon: BookOpen        },
         { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
+        { to: "/chat", label: "Chat", icon: MessageSquare },
+        { to: "/messages", label: "Messages", icon: Inbox },
         { to: "/upload",    label: "Upload",      icon: Upload          },
+        ...(profile?.role === 'admin' ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
         { to: "/#projects", label: "Projects",    icon: Sparkles        },
       ]
     : [

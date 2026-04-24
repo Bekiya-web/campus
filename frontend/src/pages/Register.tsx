@@ -72,7 +72,7 @@ const Register = () => {
     try {
       const uni = UNIVERSITIES.find((u) => u.id === form.university);
       await registerUser({ ...form, universityName: uni?.name || form.university });
-      toast.success("Account created! Welcome to Campus Helper");
+      toast.success("Account created! Welcome to EduNexus");
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const message = getFriendlyRegisterError(err);

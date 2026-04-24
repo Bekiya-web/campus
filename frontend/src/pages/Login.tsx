@@ -40,7 +40,7 @@ const Login = () => {
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-foreground">Welcome back</h1>
-          <p className="text-muted-foreground mt-2">Log in to continue to Campus Helper</p>
+          <p className="text-muted-foreground mt-2">Log in to continue to EduNexus</p>
         </div>
 
         <Card className="p-8 shadow-card border-border">
