@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   Campus Helper — Design tokens
+   Light mode: white bg, near-black text
+   Dark  mode: dark bg, near-white text
+───────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* Backgrounds */
+    --background: 0 0% 100%;          /* #ffffff */
+    --foreground: 222 47% 11%;        /* #0f172a  — very dark navy, always visible on white */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 44 100% 52%;           /* yellow base */
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 214 32% 91%;         /* #e2e8f0 */
+    --secondary-foreground: 222 47% 20%;
+
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 30% 30%;  /* #3d4a5c — much darker, always visible on white */
+
+    --accent: 199 89% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 82%;
+    --input: 214 32% 82%;
+    --ring: 44 100% 52%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #facc15 0%, #eab308 48%, #f59e0b 100%);
+    --gradient-hero: linear-gradient(135deg, #0a0f1e 0%, #0f1f3d 50%, #0c2a3f 100%);
+    --gradient-mesh: radial-gradient(at 20% 20%, rgba(250,204,21,0.12) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%,  rgba(245,158,11,0.10) 0px, transparent 50%),
+                     radial-gradient(at 80% 80%, rgba(250,204,21,0.08) 0px, transparent 50%);
+    --gradient-subtle: linear-gradient(180deg, #ffffff, #f1f5f9);
+    --gradient-card: linear-gradient(145deg, #ffffff, #f8fafc);
+
+    /* Shadows */
+    --shadow-soft:    0 1px 3px rgba(15,23,42,0.06), 0 4px 12px rgba(15,23,42,0.04);
+    --shadow-elegant: 0 10px 40px -12px rgba(245,158,11,0.25);
+    --shadow-glow:    0 0 40px rgba(250,204,21,0.30);
+    --shadow-card:    0 1px 0 rgba(255,255,255,0.8) inset, 0 4px 16px -4px rgba(15,23,42,0.08);
+
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 44 100% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 82%;
+    --sidebar-ring: 44 100% 52%;
+  }
+
+  .dark {
+    --background: 220 55% 12%;        /* dark blue */
+    --foreground: 210 40% 96%;        /* #f0f4f8 — near white */
+
+    --card: 220 52% 16%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 45 100% 56%;
+    --primary-foreground: 220 55% 12%;
+
+    --secondary: 217 33% 15%;
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 68%;  /* #9aabb8 */
+
+    --accent: 199 89% 55%;
+    --accent-foreground: 222 47% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 45 100% 56%;
+
+    --gradient-subtle: linear-gradient(180deg, #102341, #14284a);
+    --gradient-mesh: radial-gradient(at 20% 20%, rgba(250,204,21,0.14) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%,  rgba(245,158,11,0.10) 0px, transparent 50%),
+                     radial-gradient(at 80% 80%, rgba(250,204,21,0.08) 0px, transparent 50%);
+
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 45 100% 56%;
+    --sidebar-primary-foreground: 220 55% 12%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 45 100% 56%;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Base resets
+───────────────────────────────────────────── */
+@layer base {
+  * { @apply border-border; }
+
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    /* Explicit fallback so text is NEVER invisible */
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  /* Dark mode body override */
+  html.dark body {
+    background-color: hsl(220, 55%, 12%);
+    color: hsl(210, 40%, 96%);
+  }
+
+  ::selection { background: rgba(29,111,232,0.18); }
+}
+
+/* ─────────────────────────────────────────────
+   Utility classes
+───────────────────────────────────────────── */
+@layer utilities {
+  /* Glass — always readable */
+  .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  html.dark .glass {
+    background: rgba(13, 21, 38, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Glass for dark hero sections */
+  .glass-hero {
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .mesh-bg { background-image: var(--gradient-mesh); }
+
+  .marquee-track         { animation: marquee 50s linear infinite; }
+  .marquee-track-reverse { animation: marquee 65s linear infinite reverse; }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 75%);
+  }
+  html.dark .grid-pattern {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  }
+
+  .animate-fade-in  { animation: fadeIn  0.5s ease forwards; }
+  .animate-fade-up  { animation: fadeUp  0.6s ease forwards; }
+  .animate-float    { animation: float   4s ease-in-out infinite; }
+
+  .shadow-soft    { box-shadow: var(--shadow-soft); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-card    { box-shadow: var(--shadow-card); }
+  .shadow-glow    { box-shadow: var(--shadow-glow); }
+
+  .transition-smooth { transition: var(--transition-smooth); }
+  .transition-spring { transition: var(--transition-spring); }
+
+  .bg-gradient-primary { background: var(--gradient-primary); }
+  .bg-gradient-hero    { background: var(--gradient-hero); }
+  .bg-gradient-card    { background: var(--gradient-card); }
+  .bg-gradient-subtle  { background: var(--gradient-subtle); }
+
+  .btn-yellow {
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: var(--shadow-elegant);
+  }
+  .btn-yellow:hover {
+    filter: brightness(1.04);
+  }
+
+  .interactive-card {
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+  }
+  .interactive-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-elegant);
+    border-color: hsl(var(--primary) / 0.45);
+  }
+
+  /* Carousel */
+  .carousel-container {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .carousel-item { scroll-snap-align: start; }
+
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ─────────────────────────────────────────────
+   Keyframes
+───────────────────────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

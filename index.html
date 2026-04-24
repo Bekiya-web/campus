@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Helper — Academic materials for Ethiopian students</title>
+    <!-- Apply theme BEFORE first paint to prevent flash of wrong theme -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("campus-helper-theme");
+          if (stored === "dark") {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="description" content="Upload, share, and access notes, past exams and study materials from 30+ Ethiopian universities. Built for students, by students." />
+    <meta name="author" content="Campus Helper" />
+
+    <meta property="og:title" content="Campus Helper — Academic materials for Ethiopian students" />
+    <meta property="og:description" content="Upload, share, and access notes, past exams and study materials from 30+ Ethiopian universities." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
