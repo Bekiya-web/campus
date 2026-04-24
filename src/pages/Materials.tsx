@@ -1,19 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchMaterials, Material, MaterialFilters, searchMaterials } from "@/services/materialService";
 import { MaterialCard } from "@/components/MaterialCard";
 import { SearchBar } from "@/components/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UNIVERSITIES, DEPARTMENTS, YEARS } from "@/data/universities";
 import { Button } from "@/components/ui/button";
-import { Loader2, FilterX, BookOpen } from "lucide-react";
+import { Loader2, FilterX, BookOpen, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card } from "@/components/ui/card";
 
 const ANY = "__any__";
 
 const Materials = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<MaterialFilters>({});
   const [items, setItems] = useState<Material[]>([]);
   const [term, setTerm] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Check for university filter from URL
+  useEffect(() => {
+    const universityParam = searchParams.get('university');
+    if (universityParam) {
+      setFilters(prev => ({ ...prev, university: universityParam }));
+    }
+  }, [searchParams]);
+
+  // Require login to access materials
+  if (!user) {
+    return (
+      <div className="container py-20">
+        <Card className="max-w-md mx-auto p-8 text-center border-border shadow-card">
+          <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto mb-4">
+            <Lock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Login Required</h2>
+          <p className="text-muted-foreground mb-6">
+            You need to create an account to access study materials
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => navigate('/login')} variant="outline" className="font-semibold">
+              Log In
+            </Button>
+            <Button onClick={() => navigate('/register')} className="bg-blue-600 hover:bg-blue-700 font-semibold">
+              Sign Up
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   useEffect(() => {
     setLoading(true);

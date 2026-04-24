@@ -45,6 +45,7 @@ export function Navbar() {
 
   const navItems = user
     ? [
+        { to: "/", label: "Home", icon: GraduationCap },
         { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { to: "/materials", label: "Materials",  icon: BookOpen        },
         { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
@@ -52,6 +53,7 @@ export function Navbar() {
         { to: "/#projects", label: "Projects",    icon: Sparkles        },
       ]
     : [
+        { to: "/", label: "Home", icon: GraduationCap },
         { to: "/materials", label: "Materials",  icon: BookOpen        },
         { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
         { to: "/#projects", label: "Projects",   icon: Sparkles        },
