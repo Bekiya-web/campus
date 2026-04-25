@@ -4,7 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 
 interface UserMenuProps {
   userName?: string;
@@ -30,6 +30,9 @@ export const UserMenu = ({ userName, userPoints, onLogout }: UserMenuProps) => {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/profile")} className="text-foreground cursor-pointer">
           <User className="h-4 w-4 mr-2" /> Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/settings")} className="text-foreground cursor-pointer">
+          <Settings className="h-4 w-4 mr-2" /> Settings
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive cursor-pointer">
           <LogOut className="h-4 w-4 mr-2" /> Log out

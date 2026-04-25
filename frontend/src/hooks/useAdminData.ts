@@ -1,134 +1,71 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   getAllUsers, 
   updateUserRole, 
+  updateUserRestrictions,
   deleteUser, 
   getSystemStats,
   getAllMaterials,
+  getPendingMaterials,
+  approveMaterial,
+  rejectMaterial,
   deleteMaterial,
   getAllFeatureRequests,
   updateFeatureRequestStatus,
-  getAllMessages,
-  deleteMessage
+  FeatureRequest,
+  SystemStats
 } from "@/services/adminService";
 import { UserProfile } from "@/services/authService";
 import { Material } from "@/services/materialService";
-import { FeatureRequest, Message, SystemStats } from "@/components/admin/types";
 
 export function useAdminData() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [pendingMaterials, setPendingMaterials] = useState<Material[]>([]);
   const [featureRequests, setFeatureRequests] = useState<FeatureRequest[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Loading admin data...');
-      
-      // Test database connection first
-      console.log('🔌 Testing database connection...');
-      const { data: testData, error: testError } = await supabase
-        .from('users')
-        .select('count')
-        .limit(1);
-      
-      console.log('🔌 Database connection test:', { testData, testError });
-      
-      // Test if we can see any data at all
-      const { data: rawUsers, error: rawUsersError } = await supabase
-        .from('users')
-        .select('*')
-        .limit(5);
-      
-      console.log('👥 Raw users test:', { count: rawUsers?.length || 0, error: rawUsersError, sample: rawUsers?.[0] });
-      
-      const { data: rawMaterials, error: rawMaterialsError } = await supabase
-        .from('materials')
-        .select('*')
-        .limit(5);
-      
-      console.log('📚 Raw materials test:', { count: rawMaterials?.length || 0, error: rawMaterialsError, sample: rawMaterials?.[0] });
-      
-      // Load data with proper error handling
-      const [usersData, materialsData, requestsData, messagesData, statsData] = await Promise.allSettled([
+      const results = await Promise.allSettled([
         getAllUsers(),
         getAllMaterials(),
+        getPendingMaterials(),
         getAllFeatureRequests(),
-        getAllMessages(),
         getSystemStats()
       ]);
       
-      // Handle users data
-      if (usersData.status === 'fulfilled') {
-        const loadedUsers = usersData.value || [];
-        console.log('👥 Loaded users:', loadedUsers.length, loadedUsers);
-        setUsers(loadedUsers);
+      const [usersRes, materialsRes, pendingRes, requestsRes, statsRes] = results;
+
+      // Type-safe extraction of values
+      const finalUsers = usersRes.status === 'fulfilled' ? usersRes.value : [];
+      const finalMaterials = materialsRes.status === 'fulfilled' ? materialsRes.value : [];
+      const finalPending = pendingRes.status === 'fulfilled' ? pendingRes.value : [];
+      const finalRequests = requestsRes.status === 'fulfilled' ? requestsRes.value : [];
+      const finalStats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+
+      setUsers(finalUsers);
+      setMaterials(finalMaterials);
+      setPendingMaterials(finalPending);
+      setFeatureRequests(finalRequests);
+
+      if (finalStats) {
+        setSystemStats(finalStats);
       } else {
-        console.error('❌ Failed to load users:', usersData.reason);
-        setUsers([]);
-      }
-      
-      // Handle materials data
-      if (materialsData.status === 'fulfilled') {
-        const loadedMaterials = materialsData.value || [];
-        console.log('📚 Loaded materials:', loadedMaterials.length, loadedMaterials);
-        setMaterials(loadedMaterials);
-      } else {
-        console.error('❌ Failed to load materials:', materialsData.reason);
-        setMaterials([]);
-      }
-      
-      // Handle feature requests data
-      if (requestsData.status === 'fulfilled') {
-        const loadedRequests = requestsData.value || [];
-        console.log('🎯 Loaded requests:', loadedRequests.length, loadedRequests);
-        setFeatureRequests(loadedRequests);
-      } else {
-        console.error('❌ Failed to load requests:', requestsData.reason);
-        setFeatureRequests([]);
-      }
-      
-      // Handle messages data
-      if (messagesData.status === 'fulfilled') {
-        const loadedMessages = messagesData.value || [];
-        console.log('💬 Loaded messages:', loadedMessages.length, loadedMessages);
-        setMessages(loadedMessages);
-      } else {
-        console.error('❌ Failed to load messages:', messagesData.reason);
-        setMessages([]);
-      }
-      
-      // Handle stats data - calculate from actual loaded data
-      const finalUsers = usersData.status === 'fulfilled' ? (usersData.value || []) : [];
-      const finalMaterials = materialsData.status === 'fulfilled' ? (materialsData.value || []) : [];
-      const finalRequests = requestsData.status === 'fulfilled' ? (requestsData.value || []) : [];
-      const finalMessages = messagesData.status === 'fulfilled' ? (messagesData.value || []) : [];
-      
-      if (statsData.status === 'fulfilled' && statsData.value) {
-        console.log('📊 Loaded stats from service:', statsData.value);
-        setSystemStats(statsData.value);
-      } else {
-        console.error('❌ Failed to load stats, calculating from data:', statsData.status === 'rejected' ? statsData.reason : 'No data');
-        // Calculate stats from loaded data
-        const calculatedStats = {
+        // Fallback stats calculation
+        setSystemStats({
           totalUsers: finalUsers.length,
-          totalMaterials: finalMaterials.length,
+          totalMaterials: finalMaterials.length + finalPending.length,
           totalDownloads: finalMaterials.reduce((sum, m) => sum + (m.downloadCount || 0), 0),
-          totalMessages: finalMessages.length,
           totalFeatureRequests: finalRequests.length,
           activeUsers: finalUsers.length,
           newUsersThisWeek: 0,
-          newMaterialsThisWeek: 0
-        };
-        console.log('📊 Calculated stats:', calculatedStats);
-        setSystemStats(calculatedStats);
+          newMaterialsThisWeek: 0,
+        });
       }
-      
     } catch (error) {
       console.error('Error loading admin data:', error);
       toast.error("Failed to load some admin data");
@@ -140,17 +77,27 @@ export function useAdminData() {
   const handleRoleChange = async (userId: string, newRole: 'student' | 'admin') => {
     try {
       await updateUserRole(userId, newRole);
-      setUsers(users.map(u => u.uid === userId ? { ...u, role: newRole } : u));
+      setUsers(prev => prev.map(u => u.uid === userId ? { ...u, role: newRole } : u));
       toast.success(`User role updated to ${newRole}`);
     } catch (error) {
       toast.error("Failed to update user role");
     }
   };
 
+  const handleRestrictionChange = async (userId: string, restrictions: Partial<UserProfile>) => {
+    try {
+      await updateUserRestrictions(userId, restrictions);
+      setUsers(prev => prev.map(u => u.uid === userId ? { ...u, ...restrictions } : u));
+      toast.success("User restrictions updated");
+    } catch (error) {
+      toast.error("Failed to update user restrictions");
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     try {
       await deleteUser(userId);
-      setUsers(users.filter(u => u.uid !== userId));
+      setUsers(prev => prev.filter(u => u.uid !== userId));
       toast.success("User deleted successfully");
     } catch (error) {
       toast.error("Failed to delete user");
@@ -160,7 +107,7 @@ export function useAdminData() {
   const handleDeleteMaterial = async (materialId: string) => {
     try {
       await deleteMaterial(materialId);
-      setMaterials(materials.filter(m => m.id !== materialId));
+      setMaterials(prev => prev.filter(m => m.id !== materialId));
       toast.success("Material deleted successfully");
     } catch (error) {
       toast.error("Failed to delete material");
@@ -170,8 +117,8 @@ export function useAdminData() {
   const handleFeatureRequestStatusChange = async (requestId: string, status: FeatureRequest['status']) => {
     try {
       await updateFeatureRequestStatus(requestId, status);
-      setFeatureRequests(requests => 
-        requests.map(r => r.id === requestId ? { ...r, status, updatedAt: new Date().toISOString() } : r)
+      setFeatureRequests(prev => 
+        prev.map(r => r.id === requestId ? { ...r, status, updatedAt: new Date().toISOString() } : r)
       );
       toast.success(`Feature request ${status}`);
     } catch (error) {
@@ -179,13 +126,27 @@ export function useAdminData() {
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
+  const handleApproveMaterial = async (materialId: string) => {
     try {
-      await deleteMessage(messageId);
-      setMessages(messages.filter(m => m.id !== messageId));
-      toast.success("Message deleted successfully");
+      await approveMaterial(materialId);
+      const mat = pendingMaterials.find(m => m.id === materialId);
+      if (mat) {
+        setPendingMaterials(prev => prev.filter(m => m.id !== materialId));
+        setMaterials(prev => [{ ...mat, status: 'approved' as const }, ...prev]);
+      }
+      toast.success('✅ Material approved!');
     } catch (error) {
-      toast.error("Failed to delete message");
+      toast.error('Failed to approve material');
+    }
+  };
+
+  const handleRejectMaterial = async (materialId: string, reason?: string) => {
+    try {
+      await rejectMaterial(materialId, reason);
+      setPendingMaterials(prev => prev.filter(m => m.id !== materialId));
+      toast.success('Material rejected.');
+    } catch (error) {
+      toast.error('Failed to reject material');
     }
   };
 
@@ -196,15 +157,17 @@ export function useAdminData() {
   return {
     users,
     materials,
+    pendingMaterials,
     featureRequests,
-    messages,
     systemStats,
     loading,
     handleRoleChange,
+    handleRestrictionChange,
     handleDeleteUser,
     handleDeleteMaterial,
+    handleApproveMaterial,
+    handleRejectMaterial,
     handleFeatureRequestStatusChange,
-    handleDeleteMessage,
     refetch: loadData
   };
 }

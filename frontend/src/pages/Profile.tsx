@@ -1,20 +1,61 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { fetchMaterialsByIds, fetchMaterialsByUser, Material } from "@/services/materialService";
+import { updateUserProfile } from "@/services/authService";
 import { MaterialCard } from "@/components/MaterialCard";
-import { Award, Trophy, Loader2, GraduationCap } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Award,
+  Trophy,
+  Loader2,
+  GraduationCap,
+  Edit3,
+  Camera,
+  MapPin,
+  Calendar,
+  BookOpen,
+  Star,
+  Activity,
+  Settings,
+  Shield,
+  Clock,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 const Profile = () => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [uploads, setUploads] = useState<Material[]>([]);
   const [bookmarks, setBookmarks] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editData, setEditData] = useState({
+    name: profile?.name || "",
+    department: profile?.department || "",
+    year: profile?.year || "",
+    bio: profile?.bio || "",
+  });
 
   useEffect(() => {
     if (!profile) return;
+    setEditData({
+      name: profile.name || "",
+      department: profile.department || "",
+      year: profile.year || "",
+      bio: profile.bio || "",
+    });
     Promise.all([
       fetchMaterialsByUser(profile.uid),
       fetchMaterialsByIds(profile.bookmarks || []),
@@ -24,84 +65,442 @@ const Profile = () => {
     }).finally(() => setLoading(false));
   }, [profile]);
 
+  // Build real activity feed from uploads and bookmarks
+  const recentActivities = [
+    ...uploads.map((u) => ({
+      id: `up_${u.id}`,
+      type: "upload" as const,
+      date: new Date(u.createdAt),
+      title: u.title,
+    })),
+    ...bookmarks.map((b) => ({
+      id: `bk_${b.id}`,
+      type: "bookmark" as const,
+      date: new Date(b.createdAt),
+      title: b.title,
+    })),
+  ]
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 10);
+
+  const handleSaveProfile = async () => {
+    if (!user || !profile) return;
+    setSaving(true);
+    try {
+      await updateUserProfile(profile.uid, {
+        name: editData.name,
+        department: editData.department,
+        year: editData.year,
+        bio: editData.bio,
+      });
+      toast.success("Profile updated successfully!");
+      setEditMode(false);
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getNextLevelPoints = (currentPoints: number) => {
+    const levels = [0, 100, 250, 500, 1000, 2000, 5000];
+    const idx = levels.findIndex((l) => currentPoints < l);
+    return idx === -1 ? 10000 : levels[idx];
+  };
+
+  const getCurrentLevel = (points: number) => {
+    if (points >= 5000) return { level: 6, name: "Expert Scholar", color: "from-purple-500 to-pink-500" };
+    if (points >= 2000) return { level: 5, name: "Master Student", color: "from-blue-500 to-purple-500" };
+    if (points >= 1000) return { level: 4, name: "Advanced Learner", color: "from-green-500 to-blue-500" };
+    if (points >= 500) return { level: 3, name: "Active Contributor", color: "from-yellow-500 to-green-500" };
+    if (points >= 250) return { level: 2, name: "Rising Star", color: "from-orange-500 to-yellow-500" };
+    if (points >= 100) return { level: 1, name: "Beginner", color: "from-red-500 to-orange-500" };
+    return { level: 0, name: "Newcomer", color: "from-gray-400 to-gray-500" };
+  };
+
   if (!profile) return null;
 
+  const currentLevel = getCurrentLevel(profile.points);
+  const nextLevelPoints = getNextLevelPoints(profile.points);
+  const progressPercentage = Math.min(((profile.points % 1000) / 1000) * 100, 100);
+
   return (
-    <div className="container max-w-5xl py-8">
-      {/* Profile card */}
-      <Card className="p-6 md:p-8 mb-6 border-border shadow-card">
-        <div className="flex flex-col md:flex-row md:items-center gap-5">
-          <div className="h-20 w-20 rounded-2xl bg-blue-600 flex items-center justify-center shadow-elegant text-2xl font-extrabold text-white shrink-0">
-            {profile.name[0].toUpperCase()}
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-extrabold text-foreground">{profile.name}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">{profile.email}</p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Badge variant="secondary" className="text-foreground font-semibold">
-                <GraduationCap className="h-3 w-3 mr-1" />{profile.universityName}
-              </Badge>
-              <Badge variant="outline" className="text-foreground font-semibold">{profile.department}</Badge>
-              <Badge variant="outline" className="text-foreground font-semibold">{profile.year}</Badge>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="text-center px-5 py-3 rounded-xl bg-secondary border border-border">
-              <Award className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-              <div className="text-xl font-extrabold text-foreground">{profile.points}</div>
-              <div className="text-xs text-muted-foreground font-medium">points</div>
-            </div>
-            <div className="text-center px-5 py-3 rounded-xl bg-secondary border border-border">
-              <Trophy className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-              <div className="text-xl font-extrabold text-foreground">{profile.badges?.length || 0}</div>
-              <div className="text-xs text-muted-foreground font-medium">badges</div>
-            </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container max-w-6xl py-8 space-y-8"
+    >
+      {/* Hero Profile Section */}
+      <div className="relative">
+        {/* Cover Image */}
+        <div className={`h-48 rounded-t-3xl bg-gradient-to-r ${currentLevel.color} relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute top-4 right-4">
+            <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30">
+              <Camera className="h-4 w-4 mr-2" />
+              Change Cover
+            </Button>
           </div>
         </div>
-        {profile.badges?.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-border">
-            {profile.badges.map((b) => (
-              <Badge key={b} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                <Trophy className="h-3 w-3 mr-1" />{b}
-              </Badge>
+
+        {/* Profile Card */}
+        <Card className="relative -mt-16 mx-4 p-8 shadow-2xl border-white/20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-visible">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+            {/* Avatar */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div className="relative">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+                  <AvatarImage src={profile.avatar} />
+                  <AvatarFallback className={`text-3xl font-bold text-white bg-gradient-to-r ${currentLevel.color}`}>
+                    {profile.name[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full h-10 w-10 p-0 shadow-lg">
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="text-center sm:text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
+                  {profile.role === "admin" && (
+                    <Badge className="bg-red-500 text-white">
+                      <Shield className="h-3 w-3 mr-1" />
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-3">{profile.email}</p>
+                {profile.bio && (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 italic">"{profile.bio}"</p>
+                )}
+
+                {/* Level Badge */}
+                <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${currentLevel.color} text-white font-semibold mb-4`}>
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Level {currentLevel.level} — {currentLevel.name}
+                </div>
+
+                {/* Quick Stats */}
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-sm">{profile.universityName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="text-sm">{profile.department}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm">{profile.year}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { icon: Award, label: "Points", value: profile.points, colors: "from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-800", text: "text-blue-600 dark:text-blue-400", num: "text-blue-900 dark:text-blue-100", sub: "text-blue-700 dark:text-blue-300" },
+                { icon: BookOpen, label: "Uploads", value: uploads.length, colors: "from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-800", text: "text-green-600 dark:text-green-400", num: "text-green-900 dark:text-green-100", sub: "text-green-700 dark:text-green-300" },
+                { icon: Star, label: "Bookmarks", value: bookmarks.length, colors: "from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-800", text: "text-purple-600 dark:text-purple-400", num: "text-purple-900 dark:text-purple-100", sub: "text-purple-700 dark:text-purple-300" },
+                { icon: Trophy, label: "Badges", value: profile.badges?.length || 0, colors: "from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-800", text: "text-orange-600 dark:text-orange-400", num: "text-orange-900 dark:text-orange-100", sub: "text-orange-700 dark:text-orange-300" },
+              ].map(({ icon: Icon, label, value, colors, text, num, sub }) => (
+                <motion.div key={label} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
+                  <Card className={`p-4 text-center bg-gradient-to-br ${colors} shadow-sm`}>
+                    <Icon className={`h-8 w-8 ${text} mx-auto mb-2`} />
+                    <div className={`text-2xl font-bold ${num}`}>{value}</div>
+                    <div className={`text-sm ${sub}`}>{label}</div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress to Next Level</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{profile.points} / {nextLevelPoints} pts</span>
+            </div>
+            <Progress value={progressPercentage} className="h-3" />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {nextLevelPoints - profile.points} more points to reach the next level!
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-6">
+            {/* Edit Profile Dialog */}
+            <Dialog open={editMode} onOpenChange={setEditMode}>
+              <DialogTrigger asChild>
+                <Button className="flex-1 sm:flex-none">
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Profile</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-name">Full Name</Label>
+                    <Input id="edit-name" value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-bio">Bio</Label>
+                    <Input id="edit-bio" placeholder="Tell us about yourself..." value={editData.bio} onChange={(e) => setEditData({ ...editData, bio: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-department">Department</Label>
+                    <Input id="edit-department" value={editData.department} onChange={(e) => setEditData({ ...editData, department: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-year">Year</Label>
+                    <Select value={editData.year} onValueChange={(value) => setEditData({ ...editData, year: value })}>
+                      <SelectTrigger id="edit-year">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1st Year">1st Year</SelectItem>
+                        <SelectItem value="2nd Year">2nd Year</SelectItem>
+                        <SelectItem value="3rd Year">3rd Year</SelectItem>
+                        <SelectItem value="4th Year">4th Year</SelectItem>
+                        <SelectItem value="Graduate">Graduate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveProfile} className="flex-1" disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Settings Dialog */}
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Account Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Appearance</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="dark-mode">Dark Mode</Label>
+                      <Switch id="dark-mode" />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Notifications</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="email-notif">Email Notifications</Label>
+                      <Switch id="email-notif" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="push-notif">Push Notifications</Label>
+                      <Switch id="push-notif" defaultChecked />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Privacy</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="public-profile">Public Profile</Label>
+                      <Switch id="public-profile" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-email">Show Email Publicly</Label>
+                      <Switch id="show-email" />
+                    </div>
+                  </div>
+                  <Button className="w-full" onClick={() => setSettingsOpen(false)}>Done</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </Card>
+      </div>
+
+      {/* Badges Section */}
+      {profile.badges && profile.badges.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Achievements &amp; Badges
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {profile.badges.map((badge, index) => (
+              <motion.div
+                key={index}
+                whileHover={{ scale: 1.05, y: -4 }}
+                className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-center shadow-sm"
+              >
+                <Trophy className="h-8 w-8 text-yellow-600 dark:text-yellow-500 mx-auto mb-2" />
+                <div className="font-semibold text-yellow-900 dark:text-yellow-100 text-sm">{badge}</div>
+              </motion.div>
             ))}
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
-      <Tabs defaultValue="uploads">
-        <TabsList className="bg-secondary border border-border">
-          <TabsTrigger value="uploads" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-semibold">
-            My uploads ({uploads.length})
+      {/* Content Tabs */}
+      <Tabs defaultValue="uploads" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-none lg:flex">
+          <TabsTrigger value="uploads" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            My Uploads ({uploads.length})
           </TabsTrigger>
-          <TabsTrigger value="bookmarks" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-semibold">
+          <TabsTrigger value="bookmarks" className="flex items-center gap-2">
+            <Star className="h-4 w-4" />
             Bookmarks ({bookmarks.length})
           </TabsTrigger>
+          <TabsTrigger value="activity" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Activity
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="uploads" className="mt-5">
-          {loading ? (
-            <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div>
-          ) : uploads.length === 0 ? (
-            <p className="text-center py-10 text-muted-foreground">You haven't uploaded any materials yet.</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {uploads.map((m) => <MaterialCard key={m.id} material={m} />)}
+
+        <TabsContent value="uploads" className="space-y-4">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">My Uploaded Materials</h3>
+              <Button size="sm" onClick={() => window.location.href = "/upload"}>
+                <BookOpen className="h-4 w-4 mr-2" />
+                Upload New
+              </Button>
             </div>
-          )}
+            {loading ? (
+              <div className="py-12 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : uploads.length === 0 ? (
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">No uploads yet</h4>
+                <p className="text-gray-500 mb-4">Share your knowledge by uploading study materials</p>
+                <Button onClick={() => window.location.href = "/upload"}>Upload Your First Material</Button>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {uploads.map((material) => (
+                  <div key={material.id} className="relative">
+                    {material.status === 'pending' && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-300">
+                          <Clock className="h-3 w-3" /> Pending Review
+                        </span>
+                      </div>
+                    )}
+                    {material.status === 'rejected' && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
+                          ✕ Rejected
+                        </span>
+                      </div>
+                    )}
+                    <MaterialCard material={material} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </TabsContent>
-        <TabsContent value="bookmarks" className="mt-5">
-          {loading ? (
-            <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div>
-          ) : bookmarks.length === 0 ? (
-            <p className="text-center py-10 text-muted-foreground">No bookmarks yet — save materials from any card.</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bookmarks.map((m) => <MaterialCard key={m.id} material={m} />)}
-            </div>
-          )}
+
+        <TabsContent value="bookmarks" className="space-y-4">
+          <Card className="p-6">
+            <h3 className="text-xl font-bold mb-6">Bookmarked Materials</h3>
+            {loading ? (
+              <div className="py-12 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : bookmarks.length === 0 ? (
+              <div className="text-center py-12">
+                <Star className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">No bookmarks yet</h4>
+                <p className="text-gray-500 mb-4">Save materials you find useful for quick access later</p>
+                <Button variant="outline" onClick={() => window.location.href = "/materials"}>Browse Materials</Button>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bookmarks.map((material) => (
+                  <MaterialCard key={material.id} material={material} />
+                ))}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <Card className="p-6">
+            <h3 className="text-xl font-bold mb-6">Recent Activity</h3>
+            {loading ? (
+              <div className="py-12 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : recentActivities.length === 0 ? (
+              <div className="text-center py-12">
+                <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">No activity yet</h4>
+                <p className="text-gray-500">Start uploading materials or bookmarking to see your activity here.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivities.map((activity) => (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`flex items-center gap-4 p-4 rounded-xl ${
+                      activity.type === "upload"
+                        ? "bg-blue-50 dark:bg-blue-900/20"
+                        : "bg-purple-50 dark:bg-purple-900/20"
+                    }`}
+                  >
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        activity.type === "upload"
+                          ? "bg-blue-100 dark:bg-blue-800"
+                          : "bg-purple-100 dark:bg-purple-800"
+                      }`}
+                    >
+                      {activity.type === "upload" ? (
+                        <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <Star className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium dark:text-white truncate">
+                        {activity.type === "upload" ? "Uploaded:" : "Bookmarked:"}{" "}
+                        <span className="font-semibold">{activity.title}</span>
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {activity.date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 };
 

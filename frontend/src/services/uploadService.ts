@@ -1,5 +1,5 @@
 import { awardPoints, addBadge } from "./authService";
-import { createNotification } from "./notificationService";
+import { createNotification, notifyAdminsNewMaterial } from "./notificationService";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UploadMaterialParams {
@@ -17,31 +17,21 @@ export interface UploadMaterialParams {
 }
 
 export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
-  console.log("uploadMaterial: Starting upload with params:", p);
-  
   if (p.file.type !== "application/pdf") throw new Error("Only PDF files are allowed");
   if (p.file.size > 25 * 1024 * 1024) throw new Error("File must be under 25MB");
 
   const path = `${p.university}/${p.department}/${Date.now()}_${p.file.name}`;
-  console.log("uploadMaterial: Upload path:", path);
-  
   p.onProgress?.(25);
+
   const { error: uploadError } = await supabase.storage.from("materials").upload(path, p.file, {
     cacheControl: "3600",
     contentType: "application/pdf",
     upsert: false,
   });
-  
-  if (uploadError) {
-    console.error("uploadMaterial: Storage upload error:", uploadError);
-    throw uploadError;
-  }
-  console.log("uploadMaterial: File uploaded successfully");
+  if (uploadError) throw uploadError;
 
   const { data: publicUrlData } = supabase.storage.from("materials").getPublicUrl(path);
   const fileURL = publicUrlData.publicUrl;
-  console.log("uploadMaterial: File URL:", fileURL);
-  
   p.onProgress?.(75);
 
   const payload = {
@@ -61,28 +51,31 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
     ratingAvg: 0,
     ratingCount: 0,
     downloadCount: 0,
+    status: "pending", // ← Requires admin approval before going public
   };
-  
-  console.log("uploadMaterial: Inserting to database with payload:", payload);
-  const { data: inserted, error: insertError } = await supabase.from("materials").insert(payload).select("id").single();
-  
-  if (insertError) {
-    console.error("uploadMaterial: Database insert error:", insertError);
-    console.error("uploadMaterial: Error details:", {
-      message: insertError.message,
-      details: insertError.details,
-      hint: insertError.hint,
-      code: insertError.code
-    });
-    throw new Error(`Database insert failed: ${insertError.message}`);
-  }
-  
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("materials")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if (insertError) throw new Error(`Upload failed: ${insertError.message}`);
   const id = inserted.id as string;
-  console.log("uploadMaterial: Material inserted with ID:", id);
-  
   p.onProgress?.(100);
 
+  // Award points and badge
   await awardPoints(p.uploadedBy, 10);
+  await addBadge(p.uploadedBy, "First Upload");
+
+  // Notify all admins so they can review the pending material
+  await notifyAdminsNewMaterial({
+    materialId: id,
+    materialTitle: p.title,
+    uploaderName: p.uploaderName,
+  });
+
+  // Notify students in same dept about a new submission (they'll see it once approved)
   await createNotification({
     type: "new_material",
     university: p.university,
@@ -93,9 +86,6 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
     body: p.title,
     excludeUid: p.uploadedBy,
   });
-  // simple badge logic
-  await addBadge(p.uploadedBy, "First Upload");
-  
-  console.log("uploadMaterial: Upload completed successfully, returning ID:", id);
+
   return id;
 }

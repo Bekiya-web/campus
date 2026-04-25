@@ -3,12 +3,12 @@ interface QuickRepliesProps {
 }
 
 const quickReplies = [
-  "What is 25% of 80?",
+  "How do I upload materials?",
   "How do I calculate GPA?",
-  "Explain sorting algorithms",
-  "What is Big O notation?",
-  "Help me with quadratic equations",
-  "Study tips for exams",
+  "How to earn points?",
+  "Where are my bookmarks?",
+  "How does approval work?",
+  "How to chat with others?",
 ];
 
 export function QuickReplies({ onReplyClick }: QuickRepliesProps) {

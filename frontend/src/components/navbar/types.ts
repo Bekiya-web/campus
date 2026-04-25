@@ -12,5 +12,5 @@ export interface NotificationDoc {
   body: string;
   read: boolean;
   materialId?: string;
-  createdAt: Date;
+  createdAt: string;
 }

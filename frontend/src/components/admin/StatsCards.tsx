@@ -22,7 +22,7 @@ export function StatsCards({
   if (!systemStats) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
       <Card 
         className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
         onClick={() => onCardClick("users")}
@@ -59,19 +59,6 @@ export function StatsCards({
             <p className="text-2xl font-bold">{requestsCount}</p>
           </div>
           <TrendingUp className="h-8 w-8 text-purple-600" />
-        </div>
-      </Card>
-      
-      <Card 
-        className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => onCardClick("messages")}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Messages</p>
-            <p className="text-2xl font-bold">{messagesCount}</p>
-          </div>
-          <MessageSquare className="h-8 w-8 text-orange-600" />
         </div>
       </Card>
     </div>

@@ -18,7 +18,7 @@ export function SmartAIChatWidget() {
   const [messages, setMessages] = useState<ChatMessageType[]>([
     {
       role: "assistant",
-      text: "Hello! I'm your smart AI assistant. I can understand natural language and help with calculations, computer science, study tips, and platform guidance. Just ask me anything naturally!",
+      text: "Hello! I'm your EduNexus AI assistant. I'm here to help you navigate the platform, find study materials, calculate your GPA, and understand our rewards system. How can I help you today?",
       type: "general"
     },
   ]);
@@ -34,8 +34,8 @@ export function SmartAIChatWidget() {
 
     setTimeout(() => {
       const response = buildReply(cleaned);
-      setMessages((prev) => [...prev, { 
-        role: "assistant", 
+      setMessages((prev) => [...prev, {
+        role: "assistant",
         text: response.text,
         type: response.type
       }]);
@@ -51,8 +51,8 @@ export function SmartAIChatWidget() {
   if (!open) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        <Button 
-          onClick={() => setOpen(true)} 
+        <Button
+          onClick={() => setOpen(true)}
           className="btn-yellow rounded-full px-5 font-semibold shadow-elegant"
         >
           <MessageCircleMore className="mr-2 h-4 w-4" />
@@ -96,7 +96,7 @@ export function SmartAIChatWidget() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything naturally..."
+            placeholder="Ask about EduNexus..."
             onKeyDown={handleKeyDown}
           />
           <Button

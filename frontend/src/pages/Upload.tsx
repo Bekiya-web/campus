@@ -31,7 +31,7 @@ const Upload = () => {
   const handleFile = (f: File | null) => {
     if (!f) return;
     if (f.type !== "application/pdf") return toast.error("Only PDF files are allowed");
-    if (f.size > 25 * 1024 * 1024) return toast.error("File must be under 25MB");
+    if (f.size > 20 * 1024 * 1024) return toast.error("File must be under 20MB");
     setFile(f);
   };
 
@@ -55,8 +55,8 @@ const Upload = () => {
         uploaderName: profile?.name || user.user_metadata?.name || user.email || "Student",
         onProgress: setProgress,
       });
-      toast.success("Material uploaded! +10 points");
-      navigate(`/materials/${id}`);
+      toast.success("Material submitted for review! You'll be notified once it's approved.");
+      navigate("/profile");
     } catch (err) {
       const error = err as Error;
       toast.error(error.message || "Upload failed");
@@ -68,8 +68,10 @@ const Upload = () => {
   return (
     <div className="container max-w-2xl py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-foreground">Upload material</h1>
-        <p className="text-muted-foreground mt-1">Share a PDF with your fellow students</p>
+        <h1 className="text-3xl font-extrabold text-foreground">Upload Material</h1>
+        <p className="text-muted-foreground mt-1">
+          Share a PDF with your fellow students — it will be reviewed by an admin before going public.
+        </p>
       </div>
       <Card className="p-6 md:p-8 shadow-card border-border">
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -90,7 +92,7 @@ const Upload = () => {
                 <>
                   <UploadIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm font-semibold text-foreground">Click to choose a PDF</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDFs only · Max 25MB</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDFs only · Max 20MB</p>
                 </>
               )}
             </label>

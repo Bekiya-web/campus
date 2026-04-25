@@ -6,9 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/RatingStars";
-import { MaterialMessaging } from "@/components/MaterialMessaging";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
-import { Loader2, Download, ArrowLeft, FileText, User, Calendar } from "lucide-react";
+import { Loader2, Download, ArrowLeft, FileText, User, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const MaterialDetail = () => {
@@ -112,10 +111,18 @@ const MaterialDetail = () => {
               <Download className="h-4 w-4 mr-2" /> Download
             </Button>
             
-            {/* New messaging and feature request buttons */}
+            {/* Global Course Chat Link and feature request button */}
             {user && (
               <>
-                <MaterialMessaging material={material} />
+                <Button 
+                  asChild
+                  variant="outline" 
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Link to={`/global-chat?course=${encodeURIComponent(material.course)}`}>
+                    <MessageCircle className="h-4 w-4 mr-2" /> Join Discussion
+                  </Link>
+                </Button>
                 <FeatureRequestDialog material={material} />
               </>
             )}

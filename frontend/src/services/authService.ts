@@ -13,6 +13,12 @@ export interface UserProfile {
   points: number;
   badges: string[];
   bookmarks: string[];
+  avatar?: string;
+  bio?: string;
+  canUpload?: boolean;
+  canChat?: boolean;
+  canRate?: boolean;
+  isBanned?: boolean;
   createdAt?: string;
 }
 
@@ -70,6 +76,16 @@ export async function loginUser(email: string, password: string) {
   return data.user;
 }
 
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+  if (error) throw error;
+}
+
 export async function logoutUser() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
@@ -104,4 +120,9 @@ export async function addBadge(uid: string, badge: string) {
   if (badges.includes(badge)) return;
   const { error: updateError } = await supabase.from("users").update({ badges: [...badges, badge] }).eq("uid", uid);
   if (updateError) throw updateError;
+}
+
+export async function updateUserProfile(uid: string, updates: Partial<UserProfile>) {
+  const { error } = await supabase.from("users").update(updates).eq("uid", uid);
+  if (error) throw error;
 }

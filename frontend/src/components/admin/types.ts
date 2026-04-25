@@ -12,25 +12,10 @@ export interface FeatureRequest {
   updatedAt: string;
 }
 
-export interface Message {
-  id: string;
-  senderId: string;
-  senderName: string;
-  receiverId: string;
-  receiverName: string;
-  materialId?: string;
-  materialTitle?: string;
-  content: string;
-  type: 'material_message' | 'direct_message';
-  createdAt: string;
-  read: boolean;
-}
-
 export interface SystemStats {
   totalUsers: number;
   totalMaterials: number;
   totalDownloads: number;
-  totalMessages: number;
   totalFeatureRequests: number;
   activeUsers: number;
   newUsersThisWeek: number;
@@ -41,6 +26,36 @@ export interface AdminData {
   users: any[];
   materials: any[];
   featureRequests: FeatureRequest[];
-  messages: Message[];
   systemStats: SystemStats | null;
+}
+
+export interface UserPermission {
+  id: string;
+  userId: string;
+  permission: 'read' | 'write' | 'delete' | 'admin';
+  resource: 'materials' | 'users' | 'system';
+  grantedBy: string;
+  grantedAt: string;
+  expiresAt?: string;
+}
+
+export interface AdminAction {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action: 'create' | 'update' | 'delete' | 'permission_grant' | 'permission_revoke';
+  resource: 'user' | 'material' | 'permission';
+  resourceId: string;
+  details: string;
+  timestamp: string;
+  ipAddress?: string;
+}
+
+export interface UserStatus {
+  userId: string;
+  status: 'active' | 'suspended' | 'banned' | 'pending';
+  reason?: string;
+  suspendedUntil?: string;
+  modifiedBy: string;
+  modifiedAt: string;
 }

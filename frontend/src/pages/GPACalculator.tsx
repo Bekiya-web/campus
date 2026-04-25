@@ -10,6 +10,7 @@ import {
   Course,
   getGradeFromPoints
 } from "@/components/gpa";
+import { motion } from "framer-motion";
 
 const GPACalculator = () => {
   const [semesters, setSemesters] = useState<Semester[]>([
@@ -77,8 +78,12 @@ const GPACalculator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-8 px-4">
-      <div className="container max-w-7xl mx-auto">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50 py-8 px-4"
+    >
+      <div className="container max-w-7xl mx-auto space-y-8">
         <GPAHeader />
         <GPADisplay 
           cumulativeGPA={cumulativeGPA} 
@@ -106,7 +111,7 @@ const GPACalculator = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

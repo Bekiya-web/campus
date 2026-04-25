@@ -19,6 +19,7 @@ export interface Material {
   ratingAvg: number;
   ratingCount: number;
   downloadCount: number;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface MaterialFilters {
@@ -29,17 +30,17 @@ export interface MaterialFilters {
 }
 
 export async function fetchMaterials(filters: MaterialFilters = {}, max = 50): Promise<Material[]> {
-  console.log("fetchMaterials: Called with filters:", filters, "max:", max);
-  let q = supabase.from("materials").select("*").order("createdAt", { ascending: false }).limit(max);
+  let q = supabase
+    .from("materials")
+    .select("*")
+    .eq("status", "approved")
+    .order("createdAt", { ascending: false })
+    .limit(max);
   if (filters.university) q = q.eq("university", filters.university);
   if (filters.department) q = q.eq("department", filters.department);
   if (filters.year) q = q.eq("year", filters.year);
   if (filters.course) q = q.eq("course", filters.course);
-  
-  console.log("fetchMaterials: Executing query...");
   const { data, error } = await q;
-  console.log("fetchMaterials: Query result:", { data, error });
-  
   if (error) throw error;
   return (data ?? []) as Material[];
 }
@@ -48,7 +49,12 @@ export async function fetchTrending(kind: "downloaded" | "rated" | "recent", max
   let field: "createdAt" | "downloadCount" | "ratingAvg" = "createdAt";
   if (kind === "downloaded") field = "downloadCount";
   if (kind === "rated") field = "ratingAvg";
-  const { data, error } = await supabase.from("materials").select("*").order(field, { ascending: false }).limit(max);
+  const { data, error } = await supabase
+    .from("materials")
+    .select("*")
+    .eq("status", "approved")
+    .order(field, { ascending: false })
+    .limit(max);
   if (error) throw error;
   return (data ?? []) as Material[];
 }
