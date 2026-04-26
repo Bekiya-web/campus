@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,7 @@ export const MaterialMessaging = ({ material }: MaterialMessagingProps) => {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      loadMessages();
-    }
-  }, [isOpen, user, material.id]);
-
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -55,7 +49,13 @@ export const MaterialMessaging = ({ material }: MaterialMessagingProps) => {
       console.error("Failed to load messages:", error);
       setMessages([]); // Set empty array to prevent crashes
     }
-  };
+  }, [user, material.id]);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      loadMessages();
+    }
+  }, [isOpen, user, loadMessages]);
 
   const handleSendMessage = async () => {
     if (!user || !profile || !newMessage.trim()) return;

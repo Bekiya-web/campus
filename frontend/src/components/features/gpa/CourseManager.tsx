@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Plus, Calculator } from "lucide-react";
-import { Semester, Course } from "./types";
+import { Semester, Course } from "@/types/gpa";
 import { CourseRow } from "./CourseRow";
 import { getGradeColor, getGradeLabel } from "./utils";
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -87,36 +87,7 @@ const GlobalCourseChat = () => {
 
   const isAdmin = profile?.role === 'admin';
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const [courseData, dmData] = await Promise.all([
-          getCourses(),
-          user ? getDMRooms(user.id) : Promise.resolve([])
-        ]);
-        setCourses(courseData);
-        setDmRooms(dmData);
-        
-        if (initialCourseCode) {
-          const targetCourse = await getOrCreateCourseByCode(initialCourseCode);
-          if (!courseData.find(c => c.id === targetCourse.id)) {
-            setCourses(prev => [targetCourse, ...prev]);
-          }
-          handleSelectCourse(targetCourse);
-        } else if (courseData.length > 0) {
-          handleSelectCourse(courseData[0]);
-        }
-      } catch (error: any) {
-        console.error("Chat Init Error:", error);
-        toast.error("Failed to initialize chat hub.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    init();
-  }, [user, initialCourseCode]);
-
-  const handleSelectCourse = async (course: Course) => {
+  const handleSelectCourse = useCallback(async (course: Course) => {
     setSelectedCourse(course);
     try {
       const [courseRooms, allMaterials, pendingMaterials] = await Promise.all([
@@ -146,7 +117,36 @@ const GlobalCourseChat = () => {
     } catch (error) {
       toast.error("Failed to load course details");
     }
-  };
+  }, [isAdmin, profile?.university]);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const [courseData, dmData] = await Promise.all([
+          getCourses(),
+          user ? getDMRooms(user.id) : Promise.resolve([])
+        ]);
+        setCourses(courseData);
+        setDmRooms(dmData);
+        
+        if (initialCourseCode) {
+          const targetCourse = await getOrCreateCourseByCode(initialCourseCode);
+          if (!courseData.find(c => c.id === targetCourse.id)) {
+            setCourses(prev => [targetCourse, ...prev]);
+          }
+          handleSelectCourse(targetCourse);
+        } else if (courseData.length > 0) {
+          handleSelectCourse(courseData[0]);
+        }
+      } catch (error) {
+        console.error("Chat Init Error:", error);
+        toast.error("Failed to initialize chat hub.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [user, initialCourseCode, handleSelectCourse]);
 
   const handleDeleteActiveCourse = async () => {
     if (!selectedCourse || !isAdmin) return;

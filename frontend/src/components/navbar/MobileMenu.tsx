@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NavItem } from "./types";
+import { NavItem } from "@/types/navbar";
 
 interface MobileMenuProps {
   navItems: NavItem[];

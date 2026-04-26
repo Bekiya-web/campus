@@ -1,4 +1,4 @@
-import { AdminSetup as AdminSetupComponent } from "@/components/AdminSetup";
+import { AdminSetup as AdminSetupComponent } from "@/components/auth/AdminSetup";
 
 const AdminSetup = () => {
   return (

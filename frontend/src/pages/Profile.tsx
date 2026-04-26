@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { fetchMaterialsByIds, fetchMaterialsByUser, Material } from "@/services/materialService";
 import { updateUserProfile } from "@/services/authService";
-import { MaterialCard } from "@/components/MaterialCard";
+import { MaterialCard } from "@/components/common/MaterialCard";
 import { motion } from "framer-motion";
 import {
   Award,

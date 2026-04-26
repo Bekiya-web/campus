@@ -5,7 +5,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bell, CheckCircle, XCircle, Clock, BookOpen, CheckCheck } from "lucide-react";
-import { NotificationDoc } from "./types";
+import { NotificationDoc } from "@/types/navbar";
 import { markAllNotificationsRead } from "@/services/notificationService";
 
 interface NotificationsMenuProps {
@@ -35,7 +35,7 @@ export const NotificationsMenu = ({ notifications, unreadCount, onMarkRead }: No
     if (!notifications.length) return;
     const uid = notifications[0]?.uid;
     if (uid) {
-      try { await markAllNotificationsRead(uid); } catch {}
+      try { await markAllNotificationsRead(uid); } catch (e) { console.error("Failed to mark all as read:", e); }
     }
     notifications.forEach((n) => { if (!n.read) onMarkRead(n.id); });
   };

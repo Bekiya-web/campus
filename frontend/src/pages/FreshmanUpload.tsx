@@ -1,0 +1,263 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UNIVERSITIES } from "@/data/universities";
+import { uploadMaterial } from "@/services/uploadService";
+import { ensureCourseExists } from "@/services/courseService";
+import { toast } from "sonner";
+import { Upload as UploadIcon, FileText, Loader2, GraduationCap, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const FreshmanUpload = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    university: profile?.university || "",
+    course: "",
+  });
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Check if user is admin
+  if (profile?.role !== 'admin') {
+    return (
+      <div className="container max-w-2xl py-20">
+        <Card className="p-8 text-center border-red-200 bg-red-50/50">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-900 mb-2">Admin Access Only</h2>
+          <p className="text-red-700 mb-6">
+            Only administrators can upload materials to the Freshman Hub.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => navigate('/upload')} variant="outline">
+              Upload General Material
+            </Button>
+            <Button onClick={() => navigate('/dashboard')}>
+              Go to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const handleFile = (f: File | null) => {
+    if (!f) return;
+    if (f.type !== "application/pdf") return toast.error("Only PDF files are allowed");
+    if (f.size > 20 * 1024 * 1024) return toast.error("File must be under 20MB");
+    setFile(f);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return toast.error("Please select a PDF file");
+    if (!user) {
+      toast.error("Please log in to continue uploading");
+      navigate("/login");
+      return;
+    }
+    
+    // Check if user is restricted from uploading
+    if (profile?.canUpload === false) {
+      toast.error("You have been restricted from uploading materials by an administrator.");
+      return;
+    }
+    
+    if (!form.title || !form.course || !form.university)
+      return toast.error("Please fill in all required fields");
+
+    setLoading(true);
+    try {
+      const uni = UNIVERSITIES.find((u) => u.id === form.university);
+      await uploadMaterial({
+        file,
+        title: form.title,
+        description: form.description,
+        university: form.university,
+        universityName: uni?.name || form.university,
+        department: "General", // Default department for freshman materials
+        year: "1st Year", // Always Year 1 for freshman materials
+        course: form.course,
+        uploadedBy: user.id,
+        uploaderName: profile?.name || user.user_metadata?.name || user.email || "Admin",
+        status: "approved", // Freshman materials uploaded by admin are auto-approved
+        onProgress: setProgress,
+      });
+
+      // Ensure the course exists in the courses table for visibility
+      await ensureCourseExists(form.course, form.course, "General");
+
+      toast.success("Freshman material uploaded successfully!");
+      navigate("/freshman-courses");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container max-w-2xl py-10">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+            <GraduationCap className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground">Upload Freshman Material</h1>
+            <p className="text-sm text-muted-foreground">Year 1 resources for the Freshman Hub</p>
+          </div>
+        </div>
+        <Alert className="border-blue-200 bg-blue-50/50">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-900 text-sm">
+            Materials uploaded here will appear in the <strong>Freshman Courses</strong> page, organized by course.
+          </AlertDescription>
+        </Alert>
+      </div>
+
+      <Card className="p-6 md:p-8 shadow-card border-border">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* File drop */}
+          <div>
+            <Label className="mb-2 block text-foreground font-semibold text-sm">PDF file *</Label>
+            <label className="block border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-smooth cursor-pointer">
+              <input type="file" accept="application/pdf" hidden onChange={(e) => handleFile(e.target.files?.[0] || null)} />
+              {file ? (
+                <div className="flex items-center justify-center gap-3">
+                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div className="text-left">
+                    <div className="font-semibold text-sm text-foreground">{file.name}</div>
+                    <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <UploadIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm font-semibold text-foreground">Click to choose a PDF</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDFs only · Max 20MB</p>
+                </>
+              )}
+            </label>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-foreground font-semibold text-sm">Title *</Label>
+            <Input 
+              value={form.title} 
+              onChange={(e) => set("title", e.target.value)} 
+              placeholder="e.g. Introduction to Programming - Lecture Notes" 
+              required 
+              className="h-11 text-foreground" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-foreground font-semibold text-sm">Description</Label>
+            <Textarea 
+              value={form.description} 
+              onChange={(e) => set("description", e.target.value)} 
+              placeholder="Brief description of the material content..." 
+              rows={3} 
+              className="text-foreground" 
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold text-sm">University *</Label>
+              <Select value={form.university} onValueChange={(v) => set("university", v)}>
+                <SelectTrigger className="h-11 text-foreground">
+                  <SelectValue placeholder="Select university" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {UNIVERSITIES.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold text-sm">Course *</Label>
+              <Input 
+                value={form.course} 
+                onChange={(e) => set("course", e.target.value)} 
+                placeholder="e.g. Introduction to Programming" 
+                required 
+                className="h-11 text-foreground" 
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <GraduationCap className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Freshman Hub Upload</p>
+                <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
+                  <li>• Automatically set to <strong>Year 1</strong></li>
+                  <li>• Department set to <strong>General</strong></li>
+                  <li>• Will appear in Freshman Courses page</li>
+                  <li>• Organized by course code</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {loading && progress > 0 && (
+            <div className="space-y-2">
+              <Progress value={progress} className="[&>div]:bg-blue-600" />
+              <p className="text-xs text-muted-foreground">Uploading… {Math.round(progress)}%</p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/upload')}
+              className="flex-1"
+            >
+              Upload General Material Instead
+            </Button>
+            <Button
+              type="submit" 
+              disabled={loading}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-11 font-semibold"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+                  Uploading…
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Upload to Freshman Hub
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+};
+
+export default FreshmanUpload;

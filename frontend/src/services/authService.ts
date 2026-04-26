@@ -18,6 +18,8 @@ export interface UserProfile {
   canUpload?: boolean;
   canChat?: boolean;
   canRate?: boolean;
+  canComment?: boolean;
+  canDownload?: boolean;
   isBanned?: boolean;
   createdAt?: string;
 }

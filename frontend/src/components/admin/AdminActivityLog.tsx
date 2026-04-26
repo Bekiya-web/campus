@@ -17,7 +17,7 @@ import {
   Clock,
   MapPin
 } from "lucide-react";
-import { AdminAction } from "./types";
+import { AdminAction } from "@/types/admin";
 
 interface AdminActivityLogProps {
   actions?: AdminAction[];

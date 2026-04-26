@@ -5,5 +5,5 @@ export { CourseRow } from './CourseRow';
 export { GradingScale } from './GradingScale';
 export { PerformanceGuide } from './PerformanceGuide';
 export { ProTips } from './ProTips';
-export * from './types';
+export * from '@/types/gpa';
 export * from './utils';

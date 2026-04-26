@@ -1,3 +1,6 @@
+import { User } from "@supabase/supabase-js";
+import { Material } from "@/services/materialService";
+
 export interface FeatureRequest {
   id: string;
   userId: string;
@@ -23,8 +26,8 @@ export interface SystemStats {
 }
 
 export interface AdminData {
-  users: any[];
-  materials: any[];
+  users: (User & { role?: string; restriction?: string })[];
+  materials: Material[];
   featureRequests: FeatureRequest[];
   systemStats: SystemStats | null;
 }
@@ -58,4 +61,17 @@ export interface UserStatus {
   suspendedUntil?: string;
   modifiedBy: string;
   modifiedAt: string;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverName: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
+  type?: 'text' | 'system' | 'notification' | 'material_message';
+  materialTitle?: string;
 }

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchMaterials, fetchTrending, Material } from "@/services/materialService";
-import { MaterialCard } from "@/components/MaterialCard";
+import { fetchGeneralMaterials, fetchTrending, Material } from "@/services/materialService";
+import { MaterialCard } from "@/components/common/MaterialCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Loader2, TrendingUp, Sparkles, Award, Upload } from "lucide-react";
+import { Loader2, TrendingUp, Sparkles, Award, Upload, BookOpen, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -20,7 +23,7 @@ const Dashboard = () => {
       try {
         console.log("Dashboard: Fetching materials for profile:", profile);
         const [own, recent, downloaded, rated] = await Promise.all([
-          fetchMaterials({}, 8), // Remove filters temporarily to show all materials
+          fetchGeneralMaterials({}, 8), // Exclude Year 1 materials
           fetchTrending("recent", 8),
           fetchTrending("downloaded", 8),
           fetchTrending("rated", 8),
@@ -58,132 +61,172 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-foreground">
-            Welcome back, {profile.name.split(" ")[0]} 👋
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto space-y-10"
+    >
+      {/* Hero Header */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-secondary/10 border border-primary/10 p-8 md:p-12">
+        <div className="relative z-10">
+          <Badge className="mb-4 bg-primary text-primary-foreground font-bold px-3 py-1 uppercase tracking-wider">
+            Student Dashboard
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
+            Welcome back, <span className="text-primary">{profile.name.split(" ")[0]}!</span> 👋
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {profile.department} · {profile.year} · {profile.universityName}
+          <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
+            Ready to crush your studies? You have access to curated materials for <span className="text-foreground font-bold">{profile.department}</span> at {profile.universityName}.
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={async () => {
-              console.log("=== DEBUG: Checking all materials ===");
-              try {
-                const allMaterials = await fetchMaterials({}, 100);
-                console.log("All materials in database:", allMaterials);
-                
-                const myMaterials = await fetchMaterials({ 
-                  university: profile.university, 
-                  department: profile.department 
-                }, 100);
-                console.log("My filtered materials:", myMaterials);
-                
-                console.log("Profile data:", profile);
-              } catch (error) {
-                console.error("Debug error:", error);
-              }
-            }}
-            variant="outline" 
-            size="sm"
-          >
-            🐛 Debug
-          </Button>
-          <Button asChild className="btn-yellow font-semibold shadow-soft">
-            <Link to="/upload"><Upload className="h-4 w-4 mr-2" /> Upload material</Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <Card className="interactive-card p-5 border-border shadow-card">
-          <div className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">Your points</div>
-          <div className="text-2xl font-extrabold text-foreground flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" /> {profile.points}
+          
+          <div className="flex flex-wrap gap-4 mt-8">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold px-8 rounded-2xl shadow-xl shadow-primary/20">
+              <Link to="/upload">
+                <Upload className="h-5 w-5 mr-2" />
+                Upload New Material
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="font-bold rounded-2xl border-border bg-background/50 backdrop-blur-sm">
+              <Link to="/materials">
+                <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                Browse Library
+              </Link>
+            </Button>
           </div>
-        </Card>
-        <Card className="interactive-card p-5 border-border shadow-card">
-          <div className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">Bookmarks</div>
-          <div className="text-2xl font-extrabold text-foreground">{profile.bookmarks?.length || 0}</div>
-        </Card>
-        <Card className="interactive-card p-5 border-border shadow-card">
-          <div className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">Badges</div>
-          <div className="text-2xl font-extrabold text-foreground">{profile.badges?.length || 0}</div>
-        </Card>
-        <Card className="interactive-card p-5 border-border shadow-card bg-gradient-primary text-foreground">
-          <div className="text-xs font-semibold opacity-80 mb-1 uppercase tracking-wide">Role</div>
-          <div className="text-2xl font-extrabold capitalize">{profile.role}</div>
-        </Card>
+        </div>
+        <Sparkles className="absolute -bottom-10 -right-10 h-64 w-64 text-primary/5 -rotate-12 pointer-events-none" />
+      </section>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Academic Points", value: profile.points, icon: Award, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+          { label: "Bookmarks", value: profile.bookmarks?.length || 0, icon: BookOpen, color: "text-blue-500", bg: "bg-blue-500/10" },
+          { label: "Achievements", value: profile.badges?.length || 0, icon: Sparkles, color: "text-purple-500", bg: "bg-purple-500/10" },
+          { label: "Account Status", value: profile.role, icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10", capitalize: true },
+        ].map((stat, i) => (
+          <Card key={i} className="p-6 border-border hover:shadow-xl transition-all duration-300 group">
+            <div className="flex items-center gap-4">
+              <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300", stat.bg, stat.color)}>
+                <stat.icon className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</span>
+                <span className={cn("text-2xl font-black text-foreground", stat.capitalize && "capitalize")}>{stat.value}</span>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
 
       {loading ? (
-        <div className="py-20 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="py-20 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground font-medium">Personalizing your experience...</p>
         </div>
       ) : (
-        <>
-          {/* Personalized */}
-          <section className="mb-12">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" /> For your department
-            </h2>
-            <div className="mb-4 text-sm text-muted-foreground">
-              Debug: Looking for materials with university="{profile.university}" and department="{profile.department}"
-            </div>
-            {feed.length === 0 ? (
-              <Card className="p-10 text-center border-dashed border-border">
-                <p className="text-muted-foreground mb-4">
-                  No materials yet for {profile.department} at {profile.universityName}.
-                </p>
-                <Button asChild className="btn-yellow font-semibold">
-                  <Link to="/upload">Be the first to upload</Link>
+        <div className="grid lg:grid-cols-3 gap-10">
+          {/* Main Feed */}
+          <div className="lg:col-span-2 space-y-10">
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-black text-foreground flex items-center gap-3">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                  Your Department Feed
+                </h2>
+                <Button variant="link" asChild className="text-primary font-bold">
+                  <Link to="/materials">View All</Link>
                 </Button>
-              </Card>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {feed.map((m) => <MaterialCard key={m.id} material={m} />)}
               </div>
-            )}
-          </section>
+              
+              {feed.length === 0 ? (
+                <Card className="p-16 text-center border-2 border-dashed border-border bg-muted/5 rounded-3xl">
+                  <div className="h-20 w-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Upload className="h-10 w-10 text-muted-foreground opacity-20" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">No materials found yet</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+                    Be the first to contribute to the {profile.department} library and earn academic points!
+                  </p>
+                  <Button asChild className="bg-primary text-primary-foreground font-bold px-8 h-12 rounded-xl">
+                    <Link to="/upload text-white">Start Uploading</Link>
+                  </Button>
+                </Card>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-6">
+                  {feed.map((m) => <MaterialCard key={m.id} material={m} />)}
+                </div>
+              )}
+            </section>
 
-          {/* Trending */}
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" /> Trending
-            </h2>
-            <Tabs defaultValue="recent">
-              <TabsList className="bg-secondary border border-border">
-                <TabsTrigger value="recent" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
-                  Recently uploaded
-                </TabsTrigger>
-                <TabsTrigger value="downloaded" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
-                  Most downloaded
-                </TabsTrigger>
-                <TabsTrigger value="rated" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
-                  Highest rated
-                </TabsTrigger>
-              </TabsList>
-              {(["recent", "downloaded", "rated"] as const).map((k) => (
-                <TabsContent key={k} value={k} className="mt-5">
-                  {trending[k].length === 0 ? (
-                    <p className="text-muted-foreground text-sm py-8 text-center">No materials yet.</p>
-                  ) : (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {trending[k].map((m) => <MaterialCard key={m.id} material={m} />)}
+            {/* Trending Section */}
+            <section>
+              <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                Trending Resources
+              </h2>
+              <Tabs defaultValue="recent" className="w-full">
+                <TabsList className="bg-secondary/50 p-1 border border-border inline-flex h-12 mb-6">
+                  <TabsTrigger value="recent" className="px-6 h-full rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold">
+                    Recent
+                  </TabsTrigger>
+                  <TabsTrigger value="downloaded" className="px-6 h-full rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold">
+                    Popular
+                  </TabsTrigger>
+                  <TabsTrigger value="rated" className="px-6 h-full rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold">
+                    Top Rated
+                  </TabsTrigger>
+                </TabsList>
+                
+                {(["recent", "downloaded", "rated"] as const).map((k) => (
+                  <TabsContent key={k} value={k} className="focus-visible:ring-0">
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      {trending[k].length > 0 ? (
+                        trending[k].map((m) => <MaterialCard key={m.id} material={m} />)
+                      ) : (
+                        <p className="text-muted-foreground text-center py-20 w-full col-span-2">No trending materials found.</p>
+                      )}
                     </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
-          </section>
-        </>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </section>
+          </div>
+
+          {/* Right Sidebar - Activity/Suggestions */}
+          <div className="space-y-8">
+            <Card className="p-6 border-border shadow-lg">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" />
+                Community Leaderboard
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">1</div>
+                    <span className="font-bold text-sm">Top Contributor</span>
+                  </div>
+                  <Badge variant="secondary" className="font-bold">2,450 pts</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">Maintain your streak to climb higher!</p>
+              </div>
+            </Card>
+
+            <Card className="p-6 border-border bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden relative">
+              <div className="relative z-10">
+                <h3 className="text-xl font-extrabold mb-2">Join Discussions</h3>
+                <p className="text-blue-100 text-sm mb-6">Connect with peers and share study tips in our new forum.</p>
+                <Button asChild variant="secondary" className="w-full font-bold h-11 text-blue-700">
+                  <Link to="/discussions">Go to Forum</Link>
+                </Button>
+              </div>
+              <MessageSquare className="absolute -bottom-4 -right-4 h-24 w-24 text-white/10 -rotate-12" />
+            </Card>
+          </div>
+        </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

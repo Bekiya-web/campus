@@ -5,14 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RatingStars } from "@/components/RatingStars";
-import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
+import { RatingStars } from "@/components/common/RatingStars";
+import { FeatureRequestDialog } from "@/components/features/FeatureRequestDialog";
 import { Loader2, Download, ArrowLeft, FileText, User, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const MaterialDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +36,13 @@ const MaterialDetail = () => {
 
   const handleRate = async (n: number) => {
     if (!user || !id) return toast.error("Please log in to rate");
+    
+    // Check if user is restricted from rating
+    if (profile?.canRate === false) {
+      toast.error("You have been restricted from rating materials by an administrator.");
+      return;
+    }
+    
     try {
       await rateMaterial(id, user.id, n);
       setUserRating(n);
@@ -48,6 +55,13 @@ const MaterialDetail = () => {
 
   const handleDownload = async () => {
     if (!material) return;
+    
+    // Check if user is restricted from downloading
+    if (profile?.canDownload === false) {
+      toast.error("You have been restricted from downloading materials by an administrator.");
+      return;
+    }
+    
     await incrementDownload(material.id);
     window.open(material.fileURL, "_blank");
   };

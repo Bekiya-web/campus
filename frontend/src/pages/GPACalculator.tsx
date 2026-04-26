@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   GPAHeader,
   GPADisplay,
@@ -9,7 +9,7 @@ import {
   Semester,
   Course,
   getGradeFromPoints
-} from "@/components/gpa";
+} from "@/components/features/gpa";
 import { motion } from "framer-motion";
 
 const GPACalculator = () => {
@@ -35,14 +35,17 @@ const GPACalculator = () => {
     return { gpa: totalCredits > 0 ? totalPoints / totalCredits : 0, credits: totalCredits };
   };
 
-  useEffect(() => {
+  const calculate = useCallback(() => {
     const updatedSemesters = semesters.map(sem => ({ ...sem, gpa: calculateSemesterGPA(sem.courses) }));
     setSemesters(updatedSemesters);
     const { gpa, credits } = calculateCumulativeGPA();
     setCumulativeGPA(gpa);
     setTotalCredits(credits);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [semesters.map(s => s.courses).flat().length]);
+  }, [semesters]);
+
+  useEffect(() => {
+    calculate();
+  }, [calculate]);
 
   const addCourse = () => {
     const newCourse: Course = { id: Date.now().toString(), name: "", credits: 3, points: 0, grade: "F", gradePoints: 0.0 };

@@ -23,6 +23,13 @@ export function MaterialCard({ material, onBookmarkChange }: Props) {
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Please log in to bookmark");
+    
+    // Check if user is restricted from rating/bookmarking
+    if (profile?.canRate === false) {
+      toast.error("You have been restricted from bookmarking materials by an administrator.");
+      return;
+    }
+    
     try {
       const next = await toggleBookmark(user.id, material.id);
       setBookmarked(next);

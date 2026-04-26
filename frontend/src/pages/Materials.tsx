@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchMaterials, Material, MaterialFilters, searchMaterials } from "@/services/materialService";
-import { MaterialCard } from "@/components/MaterialCard";
-import { SearchBar } from "@/components/SearchBar";
+import { fetchGeneralMaterials, Material, MaterialFilters, searchMaterials } from "@/services/materialService";
+import { MaterialCard } from "@/components/common/MaterialCard";
+import { SearchBar } from "@/components/common/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UNIVERSITIES, DEPARTMENTS, YEARS } from "@/data/universities";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const Materials = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetchMaterials(filters, 100)
+    fetchGeneralMaterials(filters, 100)
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
@@ -116,7 +116,7 @@ const Materials = () => {
                   <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder="Any" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={ANY}>Any year</SelectItem>
-                    {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                    {YEARS.filter(y => y !== "1st Year").map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

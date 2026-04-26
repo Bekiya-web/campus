@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { 
   getUserMessages, 
@@ -22,7 +22,7 @@ export function useChat(userId: string | undefined) {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const allUsers = await getAllUsers();
       const currentUserMessages = await getUserMessages(userId || '');
@@ -65,9 +65,9 @@ export function useChat(userId: string | undefined) {
       console.error('Failed to load users:', error);
       toast.error("Failed to load chat users");
     }
-  };
+  }, [userId]);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!selectedUser || !userId) return;
     
     try {
@@ -98,7 +98,7 @@ export function useChat(userId: string | undefined) {
       console.error('Failed to load messages:', error);
       toast.error("Failed to load messages");
     }
-  };
+  }, [selectedUser, userId]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedUser || !userId) return;
@@ -137,13 +137,13 @@ export function useChat(userId: string | undefined) {
     if (userId) {
       loadUsers();
     }
-  }, [userId]);
+  }, [userId, loadUsers]);
 
   useEffect(() => {
     if (selectedUser) {
       loadMessages();
     }
-  }, [selectedUser, userId]);
+  }, [selectedUser, userId, loadMessages]);
 
   useEffect(() => {
     if (userId) {

@@ -246,6 +246,15 @@
   /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .dynamic-padding {
+    transition: padding-left 0.3s ease;
+  }
+  @media (min-width: 1024px) {
+    .dynamic-padding-sidebar {
+      padding-left: var(--sidebar-width, 280px);
+    }
+  }
 }
 
 /* ─────────────────────────────────────────────

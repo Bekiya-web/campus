@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { subscribeAuth, getUserProfile, UserProfile } from "@/services/authService";
 import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthContextValue {
   user: User | null;
@@ -34,6 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (u) {
         try {
           const p = await getUserProfile(u.id);
+          
+          // Check if user is banned
+          if (p.isBanned) {
+            toast.error("Your account has been banned by an administrator. Please contact support.");
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            return;
+          }
+          
           setProfile(p);
         } catch (e) {
           console.error("Profile load failed", e);

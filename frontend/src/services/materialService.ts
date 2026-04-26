@@ -45,6 +45,24 @@ export async function fetchMaterials(filters: MaterialFilters = {}, max = 50): P
   return (data ?? []) as Material[];
 }
 
+// Fetch materials excluding Year 1 (Freshman materials)
+export async function fetchGeneralMaterials(filters: MaterialFilters = {}, max = 50): Promise<Material[]> {
+  let q = supabase
+    .from("materials")
+    .select("*")
+    .eq("status", "approved")
+    .neq("year", "1st Year") // Exclude Year 1 materials
+    .order("createdAt", { ascending: false })
+    .limit(max);
+  if (filters.university) q = q.eq("university", filters.university);
+  if (filters.department) q = q.eq("department", filters.department);
+  if (filters.year) q = q.eq("year", filters.year);
+  if (filters.course) q = q.eq("course", filters.course);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as Material[];
+}
+
 export async function fetchTrending(kind: "downloaded" | "rated" | "recent", max = 12): Promise<Material[]> {
   let field: "createdAt" | "downloadCount" | "ratingAvg" = "createdAt";
   if (kind === "downloaded") field = "downloadCount";
@@ -53,6 +71,7 @@ export async function fetchTrending(kind: "downloaded" | "rated" | "recent", max
     .from("materials")
     .select("*")
     .eq("status", "approved")
+    .neq("year", "1st Year") // Exclude Year 1 materials
     .order(field, { ascending: false })
     .limit(max);
   if (error) throw error;

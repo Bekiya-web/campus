@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { NavItem } from "./types";
+import { NavItem } from "@/types/navbar";
 
 interface DesktopNavProps {
   navItems: NavItem[];

@@ -63,8 +63,9 @@ const CompleteProfile = () => {
       await refreshProfile();
       toast.success("Profile completed! Welcome to EduNexus.");
       navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save profile");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to save profile");
     } finally {
       setLoading(false);
     }

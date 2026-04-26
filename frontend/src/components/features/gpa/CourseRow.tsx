@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
-import { Course } from "./types";
+import { Course } from "@/types/gpa";
 import { getPointsColor, getGradeColor } from "./utils";
 
 interface CourseRowProps {

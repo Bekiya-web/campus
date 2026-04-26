@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,14 +33,7 @@ const Messages = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadMessages();
-      loadUsers();
-    }
-  }, [user]);
-
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -54,16 +47,23 @@ const Messages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const allUsers = await getAllUsers();
       setUsers(allUsers.filter(u => u.uid !== user?.id));
     } catch (error) {
       console.error('Failed to load users:', error);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      loadMessages();
+      loadUsers();
+    }
+  }, [user, loadMessages, loadUsers]);
 
   const handleMarkAsRead = async (message: Message) => {
     if (message.read || message.receiverId !== user?.id) return;

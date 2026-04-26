@@ -22,6 +22,8 @@ import {
   Upload,
   MessageCircle,
   Star,
+  MessageSquare,
+  Download,
 } from "lucide-react";
 import { UserProfile } from "@/services/authService";
 import { toast } from "sonner";
@@ -126,12 +128,32 @@ export function UsersManagement({ users, onRoleChange, onRestrictionChange, onDe
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label className="flex items-center gap-2"><Star className="h-4 w-4" /> Rate & Review</Label>
-                          <p className="text-xs text-muted-foreground">Allow user to rate materials and earn points</p>
+                          <Label className="flex items-center gap-2"><Star className="h-4 w-4" /> Rate & Bookmark</Label>
+                          <p className="text-xs text-muted-foreground">Allow user to rate and bookmark materials</p>
                         </div>
                         <Switch 
                           checked={user.canRate !== false} 
                           onCheckedChange={(checked) => onRestrictionChange(user.uid, { canRate: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Discussion Comments</Label>
+                          <p className="text-xs text-muted-foreground">Allow user to comment on discussions</p>
+                        </div>
+                        <Switch 
+                          checked={user.canComment !== false} 
+                          onCheckedChange={(checked) => onRestrictionChange(user.uid, { canComment: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="flex items-center gap-2"><Download className="h-4 w-4" /> Download Materials</Label>
+                          <p className="text-xs text-muted-foreground">Allow user to download study materials</p>
+                        </div>
+                        <Switch 
+                          checked={user.canDownload !== false} 
+                          onCheckedChange={(checked) => onRestrictionChange(user.uid, { canDownload: checked })}
                         />
                       </div>
                       <div className="pt-4 border-t border-red-100">
@@ -152,7 +174,7 @@ export function UsersManagement({ users, onRoleChange, onRestrictionChange, onDe
 
                 <Select
                   value={user.role}
-                  onValueChange={(val: any) => onRoleChange(user.uid, val)}
+                  onValueChange={(val: 'student' | 'admin') => onRoleChange(user.uid, val)}
                 >
                   <SelectTrigger className="w-28">
                     <SelectValue />

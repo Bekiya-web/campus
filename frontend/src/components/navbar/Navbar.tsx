@@ -16,7 +16,7 @@ import { DesktopNav } from "./DesktopNav";
 import { UserMenu } from "./UserMenu";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { MobileMenu } from "./MobileMenu";
-import { NavItem, NotificationDoc } from "./types";
+import { NavItem, NotificationDoc } from "@/types/navbar";
 
 export function Navbar() {
   const { user, profile } = useAuth();
@@ -50,23 +50,12 @@ export function Navbar() {
     setNotifs((prev) => prev.map((x) => x.id === id ? { ...x, read: true } : x));
   };
 
-  const navItems: NavItem[] = user
-    ? [
-        { to: "/", label: "Home", icon: GraduationCap },
-        { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { to: "/materials", label: "Materials",  icon: BookOpen        },
-        { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
-        { to: "/global-chat", label: "Global Chat", icon: Globe },
-        { to: "/upload",    label: "Upload",      icon: Upload          },
-        ...(profile?.role === 'admin' ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
-        { to: "/#projects", label: "Projects",    icon: Sparkles        },
-      ]
-    : [
-        { to: "/", label: "Home", icon: GraduationCap },
-        { to: "/materials", label: "Materials",  icon: BookOpen        },
-        { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
-        { to: "/#projects", label: "Projects",   icon: Sparkles        },
-      ];
+  const navItems: NavItem[] = [
+    { to: "/", label: "Home", icon: GraduationCap },
+    { to: "/materials", label: "Materials",  icon: BookOpen        },
+    { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
+    { to: "/#projects", label: "Projects",   icon: Sparkles        },
+  ];
 
   const navigateDashboard = () => {
     if (user) {
@@ -88,16 +77,33 @@ export function Navbar() {
             : "border-border/60 bg-background/90 backdrop-blur-lg"
         )}
       >
-        <div className="container flex h-16 items-center justify-between gap-4">
-          <Logo isLoggedIn={!!user} />
-          <DesktopNav navItems={navItems} />
+        <div className={cn(
+          "flex h-16 items-center justify-between gap-4",
+          user ? "px-4 lg:px-8" : "container"
+        )}>
+          <div className="flex items-center gap-4 lg:gap-8">
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden text-foreground/60"
+                onClick={() => document.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            <div className={cn(user && "lg:hidden")}>
+              <Logo isLoggedIn={!!user} />
+            </div>
+            {!user && <DesktopNav navItems={navItems} />}
+          </div>
 
-          {/* Desktop Right Side */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Right Side */}
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost" size="icon"
               onClick={toggleTheme}
-              className="text-foreground/60 hover:text-foreground hover:bg-secondary"
+              className="text-foreground/60 hover:text-foreground hover:bg-secondary rounded-full"
               aria-label="Toggle theme"
             >
               {theme === "dark"
@@ -119,23 +125,7 @@ export function Navbar() {
                 />
               </>
             ) : (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                  className="hidden lg:inline-flex items-center gap-1.5 text-foreground font-semibold"
-                >
-                  <Bot className="h-4 w-4" />
-                  AI Assistant
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={navigateDashboard}
-                  className="hidden lg:inline-flex items-center gap-1.5 text-foreground font-semibold"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Button>
+              <div className="hidden md:flex items-center gap-2">
                 <Button
                   variant="ghost"
                   onClick={() => navigate("/login")}
@@ -145,35 +135,28 @@ export function Navbar() {
                 </Button>
                 <Button
                   onClick={() => navigate("/register")}
-                  className="btn-yellow font-semibold"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6"
                 >
                   Get Started
                 </Button>
-              </>
+              </div>
             )}
-          </div>
 
-          {/* Mobile Controls */}
-          <div className="md:hidden flex items-center gap-1">
-            <Button
-              variant="ghost" size="icon"
-              onClick={toggleTheme}
-              className="text-foreground/60 hover:text-foreground"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <button
-              onClick={() => setOpen(!open)}
-              className="p-2 text-foreground/70 hover:text-foreground transition-smooth"
-              aria-label="Toggle menu"
-            >
-              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {!user && (
+              <div className="md:hidden">
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="p-2 text-foreground/70 hover:text-foreground transition-smooth"
+                  aria-label="Toggle menu"
+                >
+                  {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {open && (
+        {open && !user && (
           <MobileMenu
             navItems={navItems}
             isLoggedIn={!!user}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ import { Upload as UploadIcon, FileText, Loader2 } from "lucide-react";
 const Upload = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialYear = searchParams.get('year') || profile?.year || "";
+
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -23,7 +26,7 @@ const Upload = () => {
     title: "", description: "",
     university: profile?.university || "",
     department: profile?.department || "",
-    year: profile?.year || "",
+    year: initialYear,
     course: "",
   });
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -43,8 +46,16 @@ const Upload = () => {
       navigate("/login");
       return;
     }
+    
+    // Check if user is restricted from uploading
+    if (profile?.canUpload === false) {
+      toast.error("You have been restricted from uploading materials by an administrator.");
+      return;
+    }
+    
     if (!form.title || !form.course || !form.university || !form.department || !form.year)
       return toast.error("Please fill in all fields");
+
     setLoading(true);
     try {
       const uni = UNIVERSITIES.find((u) => u.id === form.university);
@@ -72,6 +83,18 @@ const Upload = () => {
         <p className="text-muted-foreground mt-1">
           Share a PDF with your fellow students — it will be reviewed by an admin before going public.
         </p>
+        {profile?.role === 'admin' && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Want to upload Year 1 materials?</span>
+            <Button 
+              variant="link" 
+              className="h-auto p-0 text-blue-600 font-semibold"
+              onClick={() => navigate('/freshman-upload')}
+            >
+              Use Freshman Upload →
+            </Button>
+          </div>
+        )}
       </div>
       <Card className="p-6 md:p-8 shadow-card border-border">
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -131,7 +154,11 @@ const Upload = () => {
               <Select value={form.year} onValueChange={(v) => set("year", v)}>
                 <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                  {YEARS.filter(y => y !== "1" && y !== "1st Year").map((y) => (
+                    <SelectItem key={y} value={y}>
+                      Year {y}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -3,13 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const stats = [
-  { value: "30+",   label: "Universities"  },
-  { value: "33",    label: "Departments"   },
-  { value: "100%",  label: "Free forever"  },
-  { value: "24/7",  label: "Access"        },
-];
-
 export const HeroSection = () => {
   const { user } = useAuth();
 
@@ -47,37 +40,36 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          <div className="interactive-card rounded-2xl border border-border bg-card p-4 shadow-card md:rounded-3xl md:p-6">
-            <div className="mb-4 flex items-center justify-between md:mb-6">
-              <h3 className="text-base font-bold md:text-lg">Live Student Activity</h3>
-              <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold md:px-3 md:text-xs">Real-time</span>
-            </div>
-            <div className="space-y-2.5 md:space-y-3">
-              {[
-                { title: "New upload", detail: "Software Engineering Notes · Addis Ababa University", time: "2m ago" },
-                { title: "Group study active", detail: "3 students discussing final exam strategy", time: "9m ago" },
-                { title: "AI support", detail: "25 student questions answered today", time: "Live" },
-              ].map((line) => (
-                <div key={line.title} className="group flex items-start gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-smooth md:px-4 md:py-3 md:hover:border-primary/40 md:hover:shadow-soft">
-                  <div className="relative mt-0.5 h-2.5 w-2.5 shrink-0">
-                    <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-                    <div className="absolute inset-0 rounded-full bg-primary/40 blur-[2px]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground md:text-sm">{line.title}</p>
-                    <p className="line-clamp-2 text-[11px] text-muted-foreground md:text-sm">{line.detail}</p>
-                  </div>
-                  <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground md:text-xs">{line.time}</span>
+          <div className="relative">
+            {/* Decorative background elements */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl opacity-50 animate-pulse" />
+            
+            {/* Main image container */}
+            <div className="relative group">
+              <div className="interactive-card rounded-2xl overflow-hidden shadow-2xl border-2 border-border md:rounded-3xl transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl">
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
+                
+                {/* Image */}
+                <img 
+                  src="/new.png" 
+                  alt="EduNexus Platform" 
+                  className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105"
+                />
+                
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2 md:mt-5 md:gap-3 md:grid-cols-4">
-              {stats.map((s) => (
-                <div key={s.label} className="rounded-xl border border-border bg-background p-2.5 text-center md:p-3">
-                  <div className="text-base font-extrabold text-gradient md:text-xl">{s.value}</div>
-                  <div className="text-[10px] text-muted-foreground md:text-xs">{s.label}</div>
-                </div>
-              ))}
+              </div>
+              
+              {/* Floating badge */}
+              <div className="absolute -top-4 -right-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold animate-bounce">
+                ✨ EduNexus
+              </div>
+              
+              {/* Bottom decorative line */}
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent rounded-full blur-sm" />
             </div>
           </div>
         </div>

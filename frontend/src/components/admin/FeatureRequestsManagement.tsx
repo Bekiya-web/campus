@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { TrendingUp } from "lucide-react";
-import { FeatureRequest } from "./types";
+import { FeatureRequest } from "@/types/admin";
 
 interface FeatureRequestsManagementProps {
   featureRequests: FeatureRequest[];

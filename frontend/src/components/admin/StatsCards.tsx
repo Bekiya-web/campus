@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Users, FileText, TrendingUp, MessageSquare } from "lucide-react";
-import { SystemStats } from "./types";
+import { SystemStats } from "@/types/admin";
 
 interface StatsCardsProps {
   systemStats: SystemStats | null;

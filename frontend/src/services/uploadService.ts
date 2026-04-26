@@ -13,6 +13,7 @@ export interface UploadMaterialParams {
   course: string;
   uploadedBy: string;
   uploaderName: string;
+  status?: "pending" | "approved" | "rejected";
   onProgress?: (pct: number) => void;
 }
 
@@ -51,7 +52,7 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
     ratingAvg: 0,
     ratingCount: 0,
     downloadCount: 0,
-    status: "pending", // ← Requires admin approval before going public
+    status: p.status || "pending", // Default to pending unless specified
   };
 
   const { data: inserted, error: insertError } = await supabase

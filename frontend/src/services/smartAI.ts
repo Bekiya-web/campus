@@ -16,7 +16,7 @@ export class SmartAI {
 
     for (const grade of grades) {
       const upperGrade = grade.toUpperCase().trim();
-      if (gradePoints.hasOwnProperty(upperGrade)) {
+      if (upperGrade in gradePoints) {
         totalPoints += gradePoints[upperGrade];
         validGrades++;
       }
@@ -27,7 +27,7 @@ export class SmartAI {
   }
 
   // Smart question understanding - Limited to Project Context
-  static parseQuestion(question: string): { intent: string; entities: any } {
+  static parseQuestion(question: string): { intent: string; entities: Record<string, string[]> } {
     const q = question.toLowerCase().trim();
     
     if (q.includes('gpa') || q.includes('grade') || q.includes('cgpa')) {
@@ -80,7 +80,7 @@ export class SmartAI {
     }
   }
 
-  static handleGPA(entities: any): { text: string; type: "theory" } {
+  static handleGPA(entities: { grades?: string[] }): { text: string; type: "theory" } {
     if (entities.grades && entities.grades.length > 0) {
       const res = this.evaluateGPA(entities.grades);
       if (res) {
