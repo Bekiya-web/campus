@@ -1,129 +1,101 @@
 # Campus Connect Hub
 
-A modern platform for Ethiopian university students to discover, share, and collaborate on study materials.
+A modern, high-performance platform for Ethiopian university students to discover, share, and collaborate on study materials. Built with a focus on speed, scalability, and user experience.
 
 ## 📁 Project Structure
 
 ```
 campus-connect-hub/
-├── .git/                    # Git repository
-└── frontend/                # Frontend application
-    ├── src/                 # Source code
-    ├── public/              # Static assets
-    ├── dist/                # Build output
-    ├── supabase/            # Database schema
-    └── ...config files
+│
+├── 📁 .git/                        # Git repository
+│
+├── 📁 frontend/                    # Core Frontend Application
+│   │
+│   ├── 📁 src/                     # Application Source Code
+│   │   ├── 📁 components/          # Modular React Components
+│   │   │   ├── 📁 admin/          # Admin Panel widgets & management
+│   │   │   ├── 📁 auth/           # Authentication guards & setup
+│   │   │   ├── 📁 chat/           # Real-time messaging interfaces
+│   │   │   ├── 📁 common/         # Shared UI (MaterialCards, SearchBar)
+│   │   │   ├── 📁 discussions/    # Forum & comment systems
+│   │   │   ├── 📁 features/       # Feature modules (GPA, AI Chat)
+│   │   │   │   └── 📁 gpa/        # GPA Calculator logic & UI
+│   │   │   ├── 📁 home/           # Landing page sections & components
+│   │   │   ├── 📁 layouts/        # Application layout wrappers
+│   │   │   ├── 📁 navbar/         # Navigation, Menus & Notifications
+│   │   │   └── 📁 ui/             # shadcn/ui primitive components
+│   │   │
+│   │   ├── 📁 pages/              # Route-level components (23 pages)
+│   │   ├── 📁 services/           # Supabase & API logic (11 services)
+│   │   ├── 📁 contexts/           # Global State (Auth, Theme)
+│   │   ├── 📁 hooks/              # Custom React hooks (Admin, Chat)
+│   │   ├── 📁 integrations/       # External API & client configs
+│   │   │   └── 📁 supabase/       # Supabase client & initialization
+│   │   ├── 📁 data/               # Static data & constants (Universities)
+│   │   ├── 📁 lib/                # Shared library utilities
+│   │   ├── 📁 types/              # TypeScript interfaces & definitions
+│   │   └── 📁 utils/              # Helper functions & test data
+│   │
+│   ├── 📁 database/                # SQL Infrastructure & Scripts
+│   │   ├── 📁 admin/              # Admin role & system setup
+│   │   ├── 📁 chat/               # Chat system schemas & seeds
+│   │   ├── 📁 discussions/        # Discussion forum schemas
+│   │   └── 📁 schema/             # Core material & user tables
+│   │
+│   ├── 📁 public/                  # Static Public Assets
+│   │   └── 📁 universities/       # University logo collection
+│   │
+│   ├── 📁 dist/                    # Build output (generated)
+│   ├── 📁 node_modules/            # Project dependencies
+│   │
+│   ├── 📄 package.json             # Build & dependency manifest
+│   ├── 📄 vite.config.ts           # Vite build configuration
+│   └── 📄 tailwind.config.ts       # Design system & tokens
+│
+├── 📄 README.md                    # Main Project Documentation
+└── 📄 PROJECT_STRUCTURE.md         # Detailed structural map
 ```
 
-## 🚀 Getting Started
+## 🎯 Key Features
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm (comes with Node.js)
+### Core Platform
+- 🎓 **University Hubs**: Dedicated academic spaces for 30+ Ethiopian universities.
+- 📚 **Material Library**: Secure sharing, previewing, and downloading of resources.
+- 💬 **Real-time Chat**: Course-specific global and local communication channels.
+- 🏛️ **Discussion Forums**: Rich academic interaction and Q&A system.
 
-### Installation
+### Smart Tools
+- 📊 **GPA Calculator**: Full support for Ethiopian grading scales with trends.
+- 🤖 **Smart AI Assistant**: Context-aware AI integrated for study help.
+- 🛡️ **Admin Dashboard**: Advanced moderation, user management, and stats.
 
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
+## 🚀 Technical Stack
 
-2. Install dependencies:
-```bash
-npm install
-```
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend**: Supabase (Postgres, Real-time, Auth, Storage)
+- **Architecture**: Service-oriented with typed repository layers
 
-3. Start the development server:
-```bash
-npm run dev
-```
+## 📊 Project Statistics
 
-4. Build for production:
-```bash
-npm run build
-```
+- **Complexity**: 50+ Custom TypeScript/React components.
+- **Navigation**: 23 unique route pages for a comprehensive experience.
+- **Data Integrity**: Service layers for all 11 core API domains.
+- **Code Quality**: ✅ Modular, type-safe, and highly maintainable structure.
 
-## 📦 Frontend Application
+## 🛠️ Getting Started
 
-The frontend is a React + TypeScript application built with:
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **shadcn/ui** - UI components
-- **Supabase** - Backend & database
-- **React Router** - Navigation
+1. **Clone & Setup**:
+   ```bash
+   git clone <repository-url>
+   cd campus-connect-hub/frontend
+   npm install
+   ```
 
-### Key Features
-- 🎓 30+ Ethiopian universities supported
-- 📚 Material sharing and discovery
-- 🤖 AI-powered study assistance
-- 📊 GPA calculator with Ethiopian grading scale
-- 🔐 Secure authentication
-- 📱 Fully responsive design
-- 🌙 Light/dark mode support
+2. **Development**:
+   ```bash
+   npm run dev
+   ```
 
-### Project Statistics
-- **Total Components**: 28 modular components
-- **Average File Size**: ~60 lines
-- **Code Quality**: All custom files under 300 lines
-- **Build Status**: ✅ Passing (0 errors)
-
-## 📖 Documentation
-
-Detailed documentation is available in the `frontend/` directory:
-- `CLEANUP_REPORT.md` - Security and cleanup improvements
-- `REFACTORING_SUMMARY.md` - Code refactoring guide
-- `FINAL_REFACTORING_REPORT.md` - Complete file analysis
-- `src/components/home/README.md` - Component documentation
-
-## 🔒 Security
-
-- ✅ No SSH keys or credentials in repository
-- ✅ Comprehensive `.gitignore` rules
-- ✅ Environment variables for sensitive data
-- ✅ Supabase Row Level Security (RLS) enabled
-
-## 🛠️ Development
-
-### Available Scripts
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm test             # Run tests
-```
-
-### Code Organization
-
-```
-frontend/src/
-├── components/
-│   ├── home/        # Home page components (9 files)
-│   ├── gpa/         # GPA calculator components (10 files)
-│   ├── navbar/      # Navigation components (9 files)
-│   └── ui/          # shadcn/ui components
-├── pages/           # Route pages
-├── services/        # API services
-├── contexts/        # React contexts
-├── hooks/           # Custom hooks
-└── lib/             # Utilities
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🌟 Acknowledgments
-
-Built with ❤️ for Ethiopian university students.
+---
+Built with ❤️ for the Ethiopian student community.
