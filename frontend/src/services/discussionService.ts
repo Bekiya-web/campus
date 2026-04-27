@@ -13,6 +13,8 @@ export interface DiscussionPost {
   department: string | null;
   createdAt: string;
   updatedAt: string;
+  hidden?: boolean;
+  hideUntil?: string | null;
 }
 
 export interface DiscussionComment {
@@ -27,7 +29,7 @@ export interface DiscussionComment {
 
 // ── Posts ────────────────────────────────────────────────────────────────────
 
-export async function getDiscussionPosts(filters: { university?: string; department?: string; tag?: string } = {}, limit = 20, offset = 0): Promise<DiscussionPost[]> {
+export async function getDiscussionPosts(filters: { university?: string; department?: string; tag?: string; isAdmin?: boolean } = {}, limit = 20, offset = 0): Promise<DiscussionPost[]> {
   let q = supabase
     .from('discussion_posts')
     .select('*')
@@ -40,16 +42,44 @@ export async function getDiscussionPosts(filters: { university?: string; departm
 
   const { data, error } = await q;
   if (error) throw error;
+  
+  // Filter out hidden posts for non-admins
+  if (!filters.isAdmin) {
+    const now = new Date();
+    return (data || []).filter(post => {
+      if (!post.hidden) return true;
+      if (post.hideUntil) {
+        const hideUntilDate = new Date(post.hideUntil);
+        return now > hideUntilDate; // Show if hide period has expired
+      }
+      return false; // Hidden indefinitely
+    });
+  }
+  
   return data || [];
 }
 
-export async function getPostById(id: string): Promise<DiscussionPost | null> {
+export async function getPostById(id: string, isAdmin = false): Promise<DiscussionPost | null> {
   const { data, error } = await supabase
     .from('discussion_posts')
     .select('*')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
+  
+  // Check if post is hidden for non-admins
+  if (data && !isAdmin && data.hidden) {
+    if (data.hideUntil) {
+      const now = new Date();
+      const hideUntilDate = new Date(data.hideUntil);
+      if (now <= hideUntilDate) {
+        return null; // Still hidden
+      }
+    } else {
+      return null; // Hidden indefinitely
+    }
+  }
+  
   return data;
 }
 
@@ -114,6 +144,80 @@ export async function createDiscussionPost(params: {
   }
 
   return data;
+}
+
+// ── Admin Functions ──────────────────────────────────────────────────────────
+
+export async function deleteDiscussionPost(postId: string): Promise<void> {
+  // Delete all comments first
+  const { error: commentsError } = await supabase
+    .from('discussion_comments')
+    .delete()
+    .eq('postId', postId);
+  
+  if (commentsError) {
+    console.error('Delete comments error:', commentsError);
+    throw new Error(commentsError.message || 'Failed to delete comments');
+  }
+
+  // Delete all likes
+  const { error: likesError } = await supabase
+    .from('discussion_likes')
+    .delete()
+    .eq('postId', postId);
+  
+  if (likesError) {
+    console.error('Delete likes error:', likesError);
+    throw new Error(likesError.message || 'Failed to delete likes');
+  }
+
+  // Delete the post
+  const { error } = await supabase
+    .from('discussion_posts')
+    .delete()
+    .eq('id', postId);
+  
+  if (error) {
+    console.error('Delete post error:', error);
+    throw new Error(error.message || 'Failed to delete post');
+  }
+}
+
+export async function hideDiscussionPost(postId: string, hideUntil?: Date): Promise<void> {
+  const updateData: { hidden: boolean; hideUntil?: string | null } = { 
+    hidden: true
+  };
+  
+  if (hideUntil) {
+    updateData.hideUntil = hideUntil.toISOString();
+  } else {
+    updateData.hideUntil = null;
+  }
+  
+  const { error } = await supabase
+    .from('discussion_posts')
+    .update(updateData)
+    .eq('id', postId);
+  
+  if (error) {
+    console.error('Hide post error:', error);
+    throw new Error(error.message || 'Failed to hide post');
+  }
+}
+
+export async function unhideDiscussionPost(postId: string): Promise<void> {
+  const { error } = await supabase
+    .from('discussion_posts')
+    .update({ 
+      hidden: false,
+      hideUntil: null
+    })
+    .eq('id', postId);
+  
+  if (error) {
+    console.error('Unhide post error:', error);
+    throw new Error(error.message || 'Failed to unhide post');
+  }
 }
 
 // ── Comments ─────────────────────────────────────────────────────────────────

@@ -96,3 +96,23 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
 
   return id;
 }
+
+export interface UpdateMaterialParams {
+  id: string;
+  title?: string;
+  description?: string;
+  course?: string;
+  department?: string;
+  year?: string;
+}
+
+export async function updateMaterial(params: UpdateMaterialParams): Promise<void> {
+  const { id, ...updates } = params;
+  
+  const { error } = await supabase
+    .from("materials")
+    .update(updates)
+    .eq("id", id);
+  
+  if (error) throw new Error(`Update failed: ${error.message}`);
+}

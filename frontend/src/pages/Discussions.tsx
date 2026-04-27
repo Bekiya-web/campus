@@ -20,14 +20,14 @@ const Discussions = () => {
 
   const fetchPosts = useCallback(async () => {
     try {
-      const data = await getDiscussionPosts();
+      const data = await getDiscussionPosts({ isAdmin: profile?.role === 'admin' });
       setPosts(data);
     } catch (error) {
       toast.error("Failed to load discussions");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile]);
 
   useEffect(() => {
     fetchPosts();

@@ -81,6 +81,15 @@ const FreshmanUpload = () => {
     setLoading(true);
     try {
       const uni = UNIVERSITIES.find((u) => u.id === form.university);
+      
+      // Sanitize course name to create a URL-friendly code
+      const courseCode = form.course
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-')      // Replace spaces with hyphens
+        .replace(/-+/g, '-')       // Replace multiple hyphens with single
+        .trim();
+      
       await uploadMaterial({
         file,
         title: form.title,
@@ -89,7 +98,7 @@ const FreshmanUpload = () => {
         universityName: uni?.name || form.university,
         department: "General", // Default department for freshman materials
         year: "1st Year", // Always Year 1 for freshman materials
-        course: form.course,
+        course: courseCode, // Use sanitized code instead of raw name
         uploadedBy: user.id,
         uploaderName: profile?.name || user.user_metadata?.name || user.email || "Admin",
         status: "approved", // Freshman materials uploaded by admin are auto-approved
@@ -97,7 +106,7 @@ const FreshmanUpload = () => {
       });
 
       // Ensure the course exists in the courses table for visibility
-      await ensureCourseExists(form.course, form.course, "General");
+      await ensureCourseExists(courseCode, form.course, "General");
 
       toast.success("Freshman material uploaded successfully!");
       navigate("/freshman-courses");

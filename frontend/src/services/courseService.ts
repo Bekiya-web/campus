@@ -9,10 +9,18 @@ export interface CourseWithDetails extends Course {
 }
 
 export async function ensureCourseExists(code: string, name: string, department: string): Promise<void> {
+  // Sanitize the code to make it URL-friendly
+  const sanitizedCode = code
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')      // Replace spaces with hyphens
+    .replace(/-+/g, '-')       // Replace multiple hyphens with single
+    .trim();
+
   const { data, error } = await supabase
     .from('courses')
     .select('id')
-    .eq('code', code)
+    .eq('code', sanitizedCode)
     .maybeSingle();
 
   if (error) {
@@ -25,10 +33,10 @@ export async function ensureCourseExists(code: string, name: string, department:
     const { error: insertError } = await supabase
       .from('courses')
       .insert({
-        code,
-        name,
+        code: sanitizedCode,
+        name: name,
         department,
-        description: `Automated entry for ${name}`
+        description: `Year 1 course: ${name}`
       });
     
     if (insertError) {
