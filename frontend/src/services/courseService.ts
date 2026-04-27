@@ -61,7 +61,7 @@ export async function getFreshmanCourses(): Promise<Course[]> {
   return courses || [];
 }
 
-export async function getCourseWithResources(courseCode: string, year = '1'): Promise<CourseWithDetails | null> {
+export async function getCourseWithResources(courseCode: string, year = '1st Year'): Promise<CourseWithDetails | null> {
   // Get course info
   const { data: course, error: courseError } = await supabase
     .from('courses')
@@ -71,8 +71,18 @@ export async function getCourseWithResources(courseCode: string, year = '1'): Pr
 
   if (courseError || !course) return null;
 
-  // Get materials for this course and year
-  const materials = await fetchMaterials({ course: course.code, year });
+  // Get materials for this course and year - query directly to ensure we get all materials
+  const { data: materials, error: materialsError } = await supabase
+    .from('materials')
+    .select('*')
+    .eq('status', 'approved')
+    .eq('year', year)
+    .or(`course.eq."${course.code}",course.eq."${course.name}"`)
+    .order('createdAt', { ascending: false });
+
+  if (materialsError) {
+    console.error('Error fetching materials:', materialsError);
+  }
   
   // Get discussion count (mock for now or query posts)
   const { count: discussionCount } = await supabase
@@ -82,9 +92,9 @@ export async function getCourseWithResources(courseCode: string, year = '1'): Pr
 
   return {
     ...course,
-    materialsCount: materials.length,
+    materialsCount: materials?.length || 0,
     discussionCount: discussionCount || 0,
-    materials
+    materials: (materials || []) as Material[]
   };
 }
 

@@ -21,7 +21,13 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
   if (p.file.type !== "application/pdf") throw new Error("Only PDF files are allowed");
   if (p.file.size > 25 * 1024 * 1024) throw new Error("File must be under 25MB");
 
-  const path = `${p.university}/${p.department}/${Date.now()}_${p.file.name}`;
+  // Sanitize filename: remove special characters and replace spaces with underscores
+  const sanitizedFileName = p.file.name
+    .replace(/[^\w\s.-]/g, '') // Remove special characters except word chars, spaces, dots, and hyphens
+    .replace(/\s+/g, '_')       // Replace spaces with underscores
+    .replace(/_+/g, '_');       // Replace multiple underscores with single underscore
+
+  const path = `${p.university}/${p.department}/${Date.now()}_${sanitizedFileName}`;
   p.onProgress?.(25);
 
   const { error: uploadError } = await supabase.storage.from("materials").upload(path, p.file, {

@@ -27,13 +27,13 @@ const GPACalculator = () => {
     return totalCredits > 0 ? totalPoints / totalCredits : 0;
   };
 
-  const calculateCumulativeGPA = () => {
+  const calculateCumulativeGPA = useCallback(() => {
     const allCourses = semesters.flatMap(sem => sem.courses);
     if (allCourses.length === 0) return { gpa: 0, credits: 0 };
     const totalPoints = allCourses.reduce((sum, course) => sum + (course.gradePoints * course.credits), 0);
     const totalCredits = allCourses.reduce((sum, course) => sum + course.credits, 0);
     return { gpa: totalCredits > 0 ? totalPoints / totalCredits : 0, credits: totalCredits };
-  };
+  }, [semesters]);
 
   const calculate = useCallback(() => {
     const updatedSemesters = semesters.map(sem => ({ ...sem, gpa: calculateSemesterGPA(sem.courses) }));
@@ -41,7 +41,7 @@ const GPACalculator = () => {
     const { gpa, credits } = calculateCumulativeGPA();
     setCumulativeGPA(gpa);
     setTotalCredits(credits);
-  }, [semesters]);
+  }, [semesters, calculateCumulativeGPA]);
 
   useEffect(() => {
     calculate();
