@@ -30,6 +30,9 @@ import Discussions from "./pages/Discussions";
 import DiscussionDetail from "./pages/DiscussionDetail";
 import FreshmanCourses from "./pages/FreshmanCourses";
 import CoursePage from "./pages/CoursePage";
+import News from "./pages/News";
+import NewsDetail from "./pages/NewsDetail";
+import CreateNews from "./pages/CreateNews";
 import NotFound from "./pages/NotFound.tsx";
 
 import { MainLayout } from "@/components/layouts/MainLayout";
@@ -56,6 +59,9 @@ const App = () => (
                   <Route path="/courses/:code" element={<CoursePage />} />
                   <Route path="/discussions" element={<Discussions />} />
                   <Route path="/discussions/:id" element={<DiscussionDetail />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/news/create" element={<ProtectedRoute><AdminRoute><CreateNews /></AdminRoute></ProtectedRoute>} />
+                  <Route path="/news/:id" element={<NewsDetail />} />
                   <Route path="/gpa-calculator" element={<GPACalculator />} />
                   
                   {/* Protected Routes */}

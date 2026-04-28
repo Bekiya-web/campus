@@ -54,7 +54,7 @@ export const HeroSection = () => {
                 <img 
                   src="/new.png" 
                   alt="EduNexus Platform" 
-                  className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-auto object-contain transition-transform durawebption-700 group-hover:scale-105"
                 />
                 
                 {/* Shine effect on hover */}

@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Sparkles,
   Menu,
-  X
+  X,
+  Newspaper
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function Sidebar() {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/materials", label: "Materials", icon: BookOpen },
     { to: "/freshman-courses", label: "Freshman Hub", icon: GraduationCap },
+    { to: "/news", label: "News & Updates", icon: Newspaper },
     { to: "/discussions", label: "Discussions", icon: MessageSquare },
     { to: "/global-chat", label: "Global Chat", icon: Globe },
     { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
