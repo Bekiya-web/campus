@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Loader2, Newspaper, Save, Upload, X, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, Loader2, Newspaper, Save, Upload, X, Image as ImageIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -55,6 +56,8 @@ const EditNews = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -67,7 +70,6 @@ const EditNews = () => {
     externalLink: '',
     deadline: '',
     eventDate: '',
-    tags: '',
     featured: false,
     published: true
   });
@@ -95,10 +97,11 @@ const EditNews = () => {
           externalLink: news.externalLink || '',
           deadline: news.deadline ? new Date(news.deadline).toISOString().slice(0, 16) : '',
           eventDate: news.eventDate ? new Date(news.eventDate).toISOString().slice(0, 16) : '',
-          tags: news.tags.join(', '),
           featured: news.featured,
           published: news.published
         });
+
+        setTags(news.tags || []);
 
         if (news.imageUrl) {
           setImagePreview(news.imageUrl);
@@ -213,11 +216,6 @@ const EditNews = () => {
         }
       }
 
-      const tagsArray = formData.tags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
-
       await updateNewsPost(id, {
         title: formData.title,
         content: formData.content,
@@ -229,7 +227,7 @@ const EditNews = () => {
         externalLink: formData.externalLink || null,
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
         eventDate: formData.eventDate ? new Date(formData.eventDate).toISOString() : null,
-        tags: tagsArray,
+        tags: tags,
         featured: formData.featured,
         published: formData.published
       });
@@ -251,6 +249,35 @@ const EditNews = () => {
       universityId: value,
       universityName: university?.label || ''
     });
+  };
+
+  const handleAddTag = () => {
+    const trimmedTag = tagInput.trim().toLowerCase();
+    if (!trimmedTag) return;
+    
+    if (tags.includes(trimmedTag)) {
+      toast.error("Tag already added");
+      return;
+    }
+
+    if (tags.length >= 10) {
+      toast.error("Maximum 10 tags allowed");
+      return;
+    }
+
+    setTags([...tags, trimmedTag]);
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   if (profile?.role !== 'admin') {
@@ -509,13 +536,54 @@ const EditNews = () => {
               <Label htmlFor="tags" className="text-base font-bold">
                 Tags
               </Label>
-              <Input
-                id="tags"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                placeholder="scholarship, graduate, engineering (comma-separated)"
-                className="h-12"
-              />
+              <div className="space-y-3">
+                {/* Tag Input */}
+                <div className="flex gap-2">
+                  <Input
+                    id="tags"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagInputKeyDown}
+                    placeholder="Type a tag and press Enter"
+                    className="h-12"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddTag}
+                    variant="outline"
+                    className="h-12 px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                
+                {/* Tag Display */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-4 bg-secondary/20 rounded-lg">
+                    {tags.map((tag) => (
+                      <Badge 
+                        key={tag} 
+                        variant="secondary" 
+                        className="text-sm px-3 py-1.5 gap-2"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="hover:text-destructive transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                <p className="text-xs text-muted-foreground">
+                  Add tags to categorize your news (e.g., scholarship, graduate, engineering)
+                </p>
+              </div>
             </div>
 
             {/* Featured & Published Toggles */}
