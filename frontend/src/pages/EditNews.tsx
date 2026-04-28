@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { createNewsPost, NewsCategory } from "@/services/newsService";
+import { getNewsById, updateNewsPost, NewsCategory } from "@/services/newsService";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Loader2, Newspaper, Plus, Upload, X, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, Loader2, Newspaper, Save, Upload, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -46,9 +46,11 @@ const universities = [
   { value: 'aksum', label: 'Aksum University' }
 ];
 
-const CreateNews = () => {
+const EditNews = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -66,98 +68,61 @@ const CreateNews = () => {
     deadline: '',
     eventDate: '',
     tags: '',
-    featured: false
+    featured: false,
+    published: true
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (!id) return;
 
-    if (!user || !profile || profile.role !== 'admin') {
-      toast.error("Only admins can create news");
-      return;
-    }
-
-    // Validation
-    if (!formData.title.trim()) {
-      toast.error("Title is required");
-      return;
-    }
-    if (!formData.content.trim()) {
-      toast.error("Content is required");
-      return;
-    }
-    if (!formData.category) {
-      toast.error("Category is required");
-      return;
-    }
-    if (!formData.universityId) {
-      toast.error("University is required");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // Upload image if selected
-      let imageUrl = formData.imageUrl;
-      if (imageFile) {
-        const uploadedUrl = await uploadImage();
-        if (uploadedUrl) {
-          imageUrl = uploadedUrl;
+    const fetchNews = async () => {
+      try {
+        const news = await getNewsById(id);
+        if (!news) {
+          toast.error("News not found");
+          navigate("/news");
+          return;
         }
+
+        setFormData({
+          title: news.title,
+          summary: news.summary || '',
+          content: news.content,
+          category: news.category,
+          universityId: news.universityId,
+          universityName: news.universityName,
+          imageUrl: news.imageUrl || '',
+          externalLink: news.externalLink || '',
+          deadline: news.deadline ? new Date(news.deadline).toISOString().slice(0, 16) : '',
+          eventDate: news.eventDate ? new Date(news.eventDate).toISOString().slice(0, 16) : '',
+          tags: news.tags.join(', '),
+          featured: news.featured,
+          published: news.published
+        });
+
+        if (news.imageUrl) {
+          setImagePreview(news.imageUrl);
+        }
+      } catch (error) {
+        toast.error("Failed to load news");
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const tagsArray = formData.tags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
-
-      await createNewsPost({
-        title: formData.title,
-        content: formData.content,
-        summary: formData.summary || undefined,
-        category: formData.category as NewsCategory,
-        universityId: formData.universityId,
-        universityName: formData.universityName,
-        authorId: user.id,
-        authorName: profile.name,
-        imageUrl: imageUrl || undefined,
-        externalLink: formData.externalLink || undefined,
-        deadline: formData.deadline ? new Date(formData.deadline) : undefined,
-        eventDate: formData.eventDate ? new Date(formData.eventDate) : undefined,
-        tags: tagsArray,
-        featured: formData.featured
-      });
-
-      toast.success("News posted successfully!");
-      navigate("/news");
-    } catch (error: any) {
-      console.error('Create news error:', error);
-      toast.error(error.message || "Failed to create news");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUniversityChange = (value: string) => {
-    const university = universities.find(u => u.value === value);
-    setFormData({
-      ...formData,
-      universityId: value,
-      universityName: university?.label || ''
-    });
-  };
+    fetchNews();
+  }, [id, navigate]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be under 5MB");
       return;
@@ -165,7 +130,6 @@ const CreateNews = () => {
 
     setImageFile(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -184,7 +148,6 @@ const CreateNews = () => {
 
     setIsUploadingImage(true);
     try {
-      // Sanitize filename
       const sanitizedFileName = imageFile.name
         .replace(/[^\w\s.-]/g, '')
         .replace(/\s+/g, '_')
@@ -215,12 +178,86 @@ const CreateNews = () => {
     }
   };
 
-  // Check if user is admin
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user || !profile || profile.role !== 'admin' || !id) {
+      toast.error("Only admins can edit news");
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (!formData.content.trim()) {
+      toast.error("Content is required");
+      return;
+    }
+    if (!formData.category) {
+      toast.error("Category is required");
+      return;
+    }
+    if (!formData.universityId) {
+      toast.error("University is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+
+      const tagsArray = formData.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      await updateNewsPost(id, {
+        title: formData.title,
+        content: formData.content,
+        summary: formData.summary || null,
+        category: formData.category as NewsCategory,
+        universityId: formData.universityId,
+        universityName: formData.universityName,
+        imageUrl: imageUrl || null,
+        externalLink: formData.externalLink || null,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+        eventDate: formData.eventDate ? new Date(formData.eventDate).toISOString() : null,
+        tags: tagsArray,
+        featured: formData.featured,
+        published: formData.published
+      });
+
+      toast.success("News updated successfully!");
+      navigate(`/news/${id}`);
+    } catch (error: any) {
+      console.error('Update news error:', error);
+      toast.error(error.message || "Failed to update news");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUniversityChange = (value: string) => {
+    const university = universities.find(u => u.value === value);
+    setFormData({
+      ...formData,
+      universityId: value,
+      universityName: university?.label || ''
+    });
+  };
+
   if (profile?.role !== 'admin') {
     return (
       <div className="container py-20 text-center">
         <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
-        <p className="text-muted-foreground mt-2">Only admins can create news posts.</p>
+        <p className="text-muted-foreground mt-2">Only admins can edit news posts.</p>
         <Button asChild variant="link" className="mt-4">
           <Link to="/news">Back to News</Link>
         </Button>
@@ -228,10 +265,19 @@ const CreateNews = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="container py-20 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium">Loading news...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 max-w-4xl">
       <Link 
-        to="/news" 
+        to={`/news/${id}`}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-8 group transition-colors"
       >
         <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
@@ -247,8 +293,8 @@ const CreateNews = () => {
             <Newspaper className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground">Create News Post</h1>
-            <p className="text-muted-foreground">Share important updates with students</p>
+            <h1 className="text-3xl font-extrabold text-foreground">Edit News Post</h1>
+            <p className="text-muted-foreground">Update news information</p>
           </div>
         </div>
 
@@ -281,7 +327,6 @@ const CreateNews = () => {
                 placeholder="Short description (shown on news cards)"
                 className="h-12"
               />
-              <p className="text-xs text-muted-foreground">Optional: Brief summary for preview cards</p>
             </div>
 
             {/* Category & University */}
@@ -336,7 +381,6 @@ const CreateNews = () => {
                 className="min-h-[300px] text-base"
                 required
               />
-              <p className="text-xs text-muted-foreground">Full details of the news announcement</p>
             </div>
 
             {/* Image Upload */}
@@ -394,7 +438,6 @@ const CreateNews = () => {
                 </div>
               )}
               
-              {/* Or paste URL */}
               <div className="pt-2">
                 <Label htmlFor="imageUrl" className="text-sm text-muted-foreground">
                   Or paste image URL
@@ -430,7 +473,6 @@ const CreateNews = () => {
                 placeholder="https://university.edu.et/announcement"
                 className="h-12"
               />
-              <p className="text-xs text-muted-foreground">Optional: Link to official page</p>
             </div>
 
             {/* Deadline & Event Date */}
@@ -446,7 +488,6 @@ const CreateNews = () => {
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   className="h-12"
                 />
-                <p className="text-xs text-muted-foreground">For applications/registrations</p>
               </div>
 
               <div className="space-y-2">
@@ -460,7 +501,6 @@ const CreateNews = () => {
                   onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                   className="h-12"
                 />
-                <p className="text-xs text-muted-foreground">When the event takes place</p>
               </div>
             </div>
 
@@ -476,24 +516,41 @@ const CreateNews = () => {
                 placeholder="scholarship, graduate, engineering (comma-separated)"
                 className="h-12"
               />
-              <p className="text-xs text-muted-foreground">Comma-separated tags for categorization</p>
             </div>
 
-            {/* Featured Toggle */}
-            <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="featured" className="text-base font-bold">
-                  Featured News
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Show this news in the featured carousel
-                </p>
+            {/* Featured & Published Toggles */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="featured" className="text-base font-bold">
+                    Featured News
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show this news in the featured carousel
+                  </p>
+                </div>
+                <Switch
+                  id="featured"
+                  checked={formData.featured}
+                  onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                />
               </div>
-              <Switch
-                id="featured"
-                checked={formData.featured}
-                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-              />
+
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="published" className="text-base font-bold">
+                    Published
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Make this news visible to all users
+                  </p>
+                </div>
+                <Switch
+                  id="published"
+                  checked={formData.published}
+                  onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}
+                />
+              </div>
             </div>
 
             {/* Submit Buttons */}
@@ -501,7 +558,7 @@ const CreateNews = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/news")}
+                onClick={() => navigate(`/news/${id}`)}
                 disabled={isSubmitting || isUploadingImage}
                 className="flex-1"
               >
@@ -515,12 +572,12 @@ const CreateNews = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isUploadingImage ? 'Uploading Image...' : 'Publishing...'}
+                    {isUploadingImage ? 'Uploading Image...' : 'Saving...'}
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
-                    Publish News
+                    <Save className="h-4 w-4" />
+                    Save Changes
                   </>
                 )}
               </Button>
@@ -532,4 +589,4 @@ const CreateNews = () => {
   );
 };
 
-export default CreateNews;
+export default EditNews;
