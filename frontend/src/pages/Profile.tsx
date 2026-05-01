@@ -87,18 +87,31 @@ const Profile = () => {
     if (!user || !profile) return;
     setSaving(true);
     try {
-      await updateUserProfile(profile.uid, {
+      // Only update fields that exist in the database
+      const updates: any = {
         name: editData.name,
         department: editData.department,
         year: editData.year,
-        bio: editData.bio,
-      });
+      };
+      
+      // Only include bio if it's not empty (optional field)
+      if (editData.bio) {
+        updates.bio = editData.bio;
+      }
+      
+      await updateUserProfile(profile.uid, updates);
       toast.success("Profile updated successfully!");
       setEditMode(false);
       setTimeout(() => window.location.reload(), 800);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update profile. Please try again.");
+    } catch (error: any) {
+      console.error("Profile update error:", error);
+      
+      // Check if it's a column not found error
+      if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
+        toast.error("Database schema needs updating. Please contact admin.");
+      } else {
+        toast.error("Failed to update profile. Please try again.");
+      }
     } finally {
       setSaving(false);
     }

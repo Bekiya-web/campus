@@ -107,17 +107,31 @@ export default function Settings() {
     
     setSaving(true);
     try {
-      await updateUserProfile(profile.uid, {
+      // Only update fields that exist in the database
+      const updates: any = {
         name: profileData.name,
         department: profileData.department,
         year: profileData.year,
-        bio: profileData.bio,
-      });
+      };
+      
+      // Only include bio if it's not empty (optional field)
+      if (profileData.bio) {
+        updates.bio = profileData.bio;
+      }
+      
+      await updateUserProfile(profile.uid, updates);
       toast.success("Profile updated successfully!");
       setTimeout(() => window.location.reload(), 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Profile update error:", error);
-      toast.error("Failed to update profile. Please try again.");
+      
+      // Check if it's a column not found error
+      if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
+        toast.error("Database schema needs updating. Please run the migration SQL.");
+        console.error("❌ Run: frontend/database/schema/add_bio_column.sql");
+      } else {
+        toast.error("Failed to update profile. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
@@ -166,7 +180,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <div className="border-b bg-white dark:bg-slate-900">
-        <div className="container max-w-7xl py-4">
+        <div className="container max-w-7xl py-4 px-4">
           <Button variant="ghost" onClick={() => navigate("/profile")} className="mb-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Profile
@@ -178,9 +192,35 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="container max-w-7xl py-6">
-        <div className="flex gap-6">
-          <aside className="w-64 flex-shrink-0">
+      <div className="container max-w-7xl py-6 px-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mobile Menu - Horizontal Scroll */}
+          <div className="lg:hidden overflow-x-auto pb-2">
+            <div className="flex gap-2 min-w-max">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 border"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block w-64 flex-shrink-0">
             <Card className="p-2 sticky top-6">
               <nav className="space-y-1">
                 {menuItems.map((item) => {
@@ -219,9 +259,9 @@ export default function Settings() {
                   </p>
                 </div>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="name">Full Name</Label>
                         <Input
@@ -242,7 +282,7 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="department">Department</Label>
                         <Input
@@ -273,7 +313,7 @@ export default function Settings() {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button onClick={handleSaveProfile} disabled={saving}>
+                      <Button onClick={handleSaveProfile} disabled={saving} className="w-full sm:w-auto">
                         {saving ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -290,11 +330,11 @@ export default function Settings() {
                   </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Privacy & Visibility</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Public Profile</h4>
                         <p className="text-sm text-muted-foreground">Allow others to view your profile</p>
                       </div>
@@ -308,8 +348,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Show Activity</h4>
                         <p className="text-sm text-muted-foreground">Display your recent activity publicly</p>
                       </div>
@@ -323,15 +363,15 @@ export default function Settings() {
                   </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Account Data</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1">
                         <h4 className="font-medium">Export Your Data</h4>
                         <p className="text-sm text-muted-foreground">Download a copy of your account data</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={handleExportData}>
+                      <Button variant="outline" size="sm" onClick={handleExportData} className="w-full sm:w-auto">
                         <Download className="h-4 w-4 mr-2" />
                         Export Data
                       </Button>
@@ -339,12 +379,12 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1">
                         <h4 className="font-medium text-destructive">Delete Account</h4>
                         <p className="text-sm text-muted-foreground">Permanently delete your account and all data</p>
                       </div>
-                      <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
+                      <Button variant="destructive" size="sm" onClick={handleDeleteAccount} className="w-full sm:w-auto">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Account
                       </Button>
@@ -363,10 +403,10 @@ export default function Settings() {
                   </p>
                 </div>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Email Notifications</h4>
                         <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                       </div>
@@ -380,8 +420,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Push Notifications</h4>
                         <p className="text-sm text-muted-foreground">Receive push notifications in browser</p>
                       </div>
@@ -395,8 +435,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Material Updates</h4>
                         <p className="text-sm text-muted-foreground">Get notified about new materials</p>
                       </div>
@@ -410,8 +450,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">New Messages</h4>
                         <p className="text-sm text-muted-foreground">Get notified about new messages</p>
                       </div>
@@ -425,8 +465,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Weekly Digest</h4>
                         <p className="text-sm text-muted-foreground">Receive weekly summary emails</p>
                       </div>
@@ -439,7 +479,7 @@ export default function Settings() {
                     </div>
 
                     <div className="flex justify-end pt-4">
-                      <Button onClick={handleSaveNotifications}>
+                      <Button onClick={handleSaveNotifications} className="w-full sm:w-auto">
                         <Save className="h-4 w-4 mr-2" />
                         Save Preferences
                       </Button>
@@ -458,7 +498,7 @@ export default function Settings() {
                   </p>
                 </div>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Change Password</h3>
                   <div className="space-y-4">
                     <div>
@@ -500,32 +540,32 @@ export default function Settings() {
                       />
                     </div>
 
-                    <Button onClick={handleChangePassword}>
+                    <Button onClick={handleChangePassword} className="w-full sm:w-auto">
                       <Lock className="h-4 w-4 mr-2" />
                       Change Password
                     </Button>
                   </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Two-Factor Authentication</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Add an extra layer of security to your account
                   </p>
-                  <Button variant="outline">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     <Shield className="h-4 w-4 mr-2" />
                     Enable 2FA
                   </Button>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Active Sessions</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Manage your active sessions across devices
                   </p>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-slate-700">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg dark:border-slate-700">
+                      <div className="flex-1">
                         <p className="font-medium">Current Session</p>
                         <p className="text-sm text-muted-foreground">Chrome on Windows • Active now</p>
                       </div>
@@ -545,7 +585,7 @@ export default function Settings() {
                   </p>
                 </div>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Appearance</h3>
                   <div className="space-y-4">
                     <div>
@@ -564,7 +604,7 @@ export default function Settings() {
                   </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Language & Region</h3>
                   <div className="space-y-4">
                     <div>
@@ -583,7 +623,7 @@ export default function Settings() {
                   </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Display Options</h3>
                   <div className="space-y-4">
                     <div>
@@ -603,8 +643,8 @@ export default function Settings() {
 
                     <Separator />
 
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
                         <h4 className="font-medium">Show Email on Profile</h4>
                         <p className="text-sm text-muted-foreground">Display your email address publicly</p>
                       </div>
@@ -619,7 +659,7 @@ export default function Settings() {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSavePreferences}>
+                  <Button onClick={handleSavePreferences} className="w-full sm:w-auto">
                     <Save className="h-4 w-4 mr-2" />
                     Save Preferences
                   </Button>
