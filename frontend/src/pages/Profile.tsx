@@ -48,6 +48,14 @@ const Profile = () => {
     bio: profile?.bio || "",
   });
 
+  const [settings, setSettings] = useState({
+    darkMode: profile?.dark_mode || false,
+    emailNotifications: profile?.email_notifications ?? true,
+    pushNotifications: profile?.push_notifications ?? true,
+    publicProfile: profile?.public_profile ?? true,
+    showEmail: profile?.show_email || false,
+  });
+
   useEffect(() => {
     if (!profile) return;
     setEditData({
@@ -55,6 +63,13 @@ const Profile = () => {
       department: profile.department || "",
       year: profile.year || "",
       bio: profile.bio || "",
+    });
+    setSettings({
+      darkMode: profile.dark_mode || false,
+      emailNotifications: profile.email_notifications ?? true,
+      pushNotifications: profile.push_notifications ?? true,
+      publicProfile: profile.public_profile ?? true,
+      showEmail: profile.show_email || false,
     });
     Promise.all([
       fetchMaterialsByUser(profile.uid),
@@ -111,6 +126,34 @@ const Profile = () => {
         toast.error("Database schema needs updating. Please contact admin.");
       } else {
         toast.error("Failed to update profile. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user || !profile) return;
+    setSaving(true);
+    try {
+      await updateUserProfile(profile.uid, {
+        dark_mode: settings.darkMode,
+        email_notifications: settings.emailNotifications,
+        push_notifications: settings.pushNotifications,
+        public_profile: settings.publicProfile,
+        show_email: settings.showEmail,
+      });
+      toast.success("Settings saved successfully!");
+      setSettingsOpen(false);
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: any) {
+      console.error("Settings update error:", error);
+      
+      if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
+        toast.error("Database schema needs updating. Please run the migration SQL.");
+        console.error("❌ Run: frontend/database/schema/add_user_preferences.sql");
+      } else {
+        toast.error("Failed to save settings. Please try again.");
       }
     } finally {
       setSaving(false);
@@ -307,7 +350,7 @@ const Profile = () => {
                   Settings
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Account Settings</DialogTitle>
                 </DialogHeader>
@@ -316,32 +359,58 @@ const Profile = () => {
                     <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Appearance</h4>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="dark-mode">Dark Mode</Label>
-                      <Switch id="dark-mode" />
+                      <Switch 
+                        id="dark-mode" 
+                        checked={settings.darkMode}
+                        onCheckedChange={(checked) => setSettings({ ...settings, darkMode: checked })}
+                      />
                     </div>
                   </div>
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Notifications</h4>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="email-notif">Email Notifications</Label>
-                      <Switch id="email-notif" defaultChecked />
+                      <Switch 
+                        id="email-notif" 
+                        checked={settings.emailNotifications}
+                        onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+                      />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="push-notif">Push Notifications</Label>
-                      <Switch id="push-notif" defaultChecked />
+                      <Switch 
+                        id="push-notif" 
+                        checked={settings.pushNotifications}
+                        onCheckedChange={(checked) => setSettings({ ...settings, pushNotifications: checked })}
+                      />
                     </div>
                   </div>
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Privacy</h4>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="public-profile">Public Profile</Label>
-                      <Switch id="public-profile" defaultChecked />
+                      <Switch 
+                        id="public-profile" 
+                        checked={settings.publicProfile}
+                        onCheckedChange={(checked) => setSettings({ ...settings, publicProfile: checked })}
+                      />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="show-email">Show Email Publicly</Label>
-                      <Switch id="show-email" />
+                      <Switch 
+                        id="show-email" 
+                        checked={settings.showEmail}
+                        onCheckedChange={(checked) => setSettings({ ...settings, showEmail: checked })}
+                      />
                     </div>
                   </div>
-                  <Button className="w-full" onClick={() => setSettingsOpen(false)}>Done</Button>
+                  <div className="flex gap-2">
+                    <Button className="flex-1" onClick={handleSaveSettings} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      Save Settings
+                    </Button>
+                    <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancel</Button>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>

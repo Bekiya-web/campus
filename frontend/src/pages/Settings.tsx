@@ -42,8 +42,8 @@ export default function Settings() {
   });
 
   const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
+    emailNotifications: profile?.email_notifications ?? true,
+    pushNotifications: profile?.push_notifications ?? true,
     materialUpdates: true,
     newMessages: true,
     weeklyDigest: false,
@@ -59,9 +59,12 @@ export default function Settings() {
     theme: "system",
     language: "en",
     itemsPerPage: "10",
-    showEmail: false,
-    publicProfile: true,
+    showEmail: profile?.show_email || false,
+    publicProfile: profile?.public_profile ?? true,
     showActivity: true,
+    darkMode: profile?.dark_mode || false,
+    emailNotifications: profile?.email_notifications ?? true,
+    pushNotifications: profile?.push_notifications ?? true,
   });
 
   const handleExportData = () => {
@@ -137,9 +140,30 @@ export default function Settings() {
     }
   };
 
-  const handleSaveNotifications = () => {
-    localStorage.setItem("edunexus_notifications", JSON.stringify(notifications));
-    toast.success("Notification preferences saved!");
+  const handleSaveNotifications = async () => {
+    if (!user || !profile) return;
+    setSaving(true);
+    try {
+      await updateUserProfile(profile.uid, {
+        email_notifications: notifications.emailNotifications,
+        push_notifications: notifications.pushNotifications,
+      });
+      // Also save to localStorage for non-database settings
+      localStorage.setItem("edunexus_notifications", JSON.stringify(notifications));
+      toast.success("Notification preferences saved!");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: any) {
+      console.error("Notifications update error:", error);
+      
+      if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
+        toast.error("Database schema needs updating. Please run the migration SQL.");
+        console.error("❌ Run: frontend/database/schema/add_user_preferences.sql");
+      } else {
+        toast.error("Failed to save notification preferences. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = () => {
@@ -155,9 +179,33 @@ export default function Settings() {
     setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
   };
 
-  const handleSavePreferences = () => {
-    localStorage.setItem("edunexus_preferences", JSON.stringify(preferences));
-    toast.success("Preferences saved!");
+  const handleSavePreferences = async () => {
+    if (!user || !profile) return;
+    setSaving(true);
+    try {
+      await updateUserProfile(profile.uid, {
+        dark_mode: preferences.darkMode,
+        email_notifications: preferences.emailNotifications,
+        push_notifications: preferences.pushNotifications,
+        public_profile: preferences.publicProfile,
+        show_email: preferences.showEmail,
+      });
+      // Also save to localStorage for non-database settings
+      localStorage.setItem("edunexus_preferences", JSON.stringify(preferences));
+      toast.success("Preferences saved!");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: any) {
+      console.error("Preferences update error:", error);
+      
+      if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
+        toast.error("Database schema needs updating. Please run the migration SQL.");
+        console.error("❌ Run: frontend/database/schema/add_user_preferences.sql");
+      } else {
+        toast.error("Failed to save preferences. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const menuItems = [
@@ -360,6 +408,37 @@ export default function Settings() {
                         }
                       />
                     </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium">Show Email Publicly</h4>
+                        <p className="text-sm text-muted-foreground">Display your email address on your profile</p>
+                      </div>
+                      <Switch
+                        checked={preferences.showEmail}
+                        onCheckedChange={(checked) =>
+                          setPreferences({ ...preferences, showEmail: checked })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-6">
+                    <Button onClick={handleSavePreferences} disabled={saving} className="w-full sm:w-auto">
+                      {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Privacy Settings
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </Card>
 
@@ -479,9 +558,18 @@ export default function Settings() {
                     </div>
 
                     <div className="flex justify-end pt-4">
-                      <Button onClick={handleSaveNotifications} className="w-full sm:w-auto">
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Preferences
+                      <Button onClick={handleSaveNotifications} disabled={saving} className="w-full sm:w-auto">
+                        {saving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Preferences
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -588,18 +676,17 @@ export default function Settings() {
                 <Card className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold mb-4">Appearance</h3>
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="theme">Theme</Label>
-                      <select
-                        id="theme"
-                        value={preferences.theme}
-                        onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-md dark:bg-slate-800 dark:border-slate-700"
-                      >
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="system">System</option>
-                      </select>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium">Dark Mode</h4>
+                        <p className="text-sm text-muted-foreground">Enable dark theme</p>
+                      </div>
+                      <Switch
+                        checked={preferences.darkMode}
+                        onCheckedChange={(checked) =>
+                          setPreferences({ ...preferences, darkMode: checked })
+                        }
+                      />
                     </div>
                   </div>
                 </Card>
@@ -659,9 +746,18 @@ export default function Settings() {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSavePreferences} className="w-full sm:w-auto">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Preferences
+                  <Button onClick={handleSavePreferences} disabled={saving} className="w-full sm:w-auto">
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Preferences
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

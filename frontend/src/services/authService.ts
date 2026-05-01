@@ -22,6 +22,12 @@ export interface UserProfile {
   canDownload?: boolean;
   isBanned?: boolean;
   createdAt?: string;
+  // User preferences
+  dark_mode?: boolean;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  public_profile?: boolean;
+  show_email?: boolean;
 }
 
 export async function registerUser(params: {
