@@ -134,3 +134,40 @@ export async function updateUserProfile(uid: string, updates: Partial<UserProfil
   const { error } = await supabase.from("users").update(updates).eq("uid", uid);
   if (error) throw error;
 }
+
+export async function changePassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+  if (error) throw error;
+}
+
+export async function enrollMFA() {
+  const { data, error } = await supabase.auth.mfa.enroll({
+    factorType: 'totp',
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function verifyMFA(factorId: string, code: string) {
+  const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+    factorId,
+    code,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function unenrollMFA(factorId: string) {
+  const { error } = await supabase.auth.mfa.unenroll({
+    factorId,
+  });
+  if (error) throw error;
+}
+
+export async function listMFAFactors() {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) throw error;
+  return data;
+}

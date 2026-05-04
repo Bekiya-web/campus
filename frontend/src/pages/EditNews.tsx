@@ -172,8 +172,9 @@ const EditNews = () => {
         .getPublicUrl(path);
 
       return publicUrlData.publicUrl;
-    } catch (error: any) {
-      console.error('Image upload error:', error);
+    } catch (error) {
+      const err = error as Error;
+      console.error('Image upload error:', err);
       toast.error("Failed to upload image");
       return null;
     } finally {
@@ -234,9 +235,10 @@ const EditNews = () => {
 
       toast.success("News updated successfully!");
       navigate(`/news/${id}`);
-    } catch (error: any) {
-      console.error('Update news error:', error);
-      toast.error(error.message || "Failed to update news");
+    } catch (error) {
+      const err = error as Error;
+      console.error('Update news error:', err);
+      toast.error(err.message || "Failed to update news");
     } finally {
       setIsSubmitting(false);
     }

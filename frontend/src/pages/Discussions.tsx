@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getDiscussionPosts, createDiscussionPost, DiscussionPost, subscribeToPosts } from "@/services/discussionService";
 import { DiscussionCard } from "@/components/discussions/DiscussionCard";
 import { PostForm } from "@/components/discussions/PostForm";
@@ -12,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Discussions = () => {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,7 +94,7 @@ const Discussions = () => {
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold text-foreground flex items-center gap-3">
             <MessageSquare className="h-10 w-10 text-primary" />
-            Discussions
+            {t.discussions.title}
           </h1>
           <p className="text-muted-foreground text-lg">
             Share knowledge, ask questions, and support your fellow students.
@@ -103,14 +105,14 @@ const Discussions = () => {
           <DialogTrigger asChild>
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 shadow-xl shadow-primary/20 gap-2">
               <Plus className="h-5 w-5" />
-              New Discussion
+              {t.discussions.createPost}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[700px] bg-background/95 backdrop-blur-xl border-border">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                 <Sparkles className="h-6 w-6 text-yellow-500" />
-                Start a Discussion
+                {t.discussions.createPost}
               </DialogTitle>
             </DialogHeader>
             <PostForm 
@@ -129,13 +131,13 @@ const Discussions = () => {
           <Input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search discussions, questions, or tags..." 
+            placeholder={t.discussions.searchDiscussions}
             className="pl-11 h-12 bg-card/50 border-border focus:ring-primary/20 text-lg shadow-sm"
           />
         </div>
         <Button variant="outline" className="h-12 px-6 gap-2 border-border bg-card/50">
           <Filter className="h-4 w-4" />
-          Filter
+          {t.common.filter}
         </Button>
       </div>
 
@@ -143,7 +145,7 @@ const Discussions = () => {
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium">Loading discussions...</p>
+          <p className="text-muted-foreground font-medium">{t.common.loading}</p>
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="py-20 text-center space-y-6">
@@ -151,13 +153,13 @@ const Discussions = () => {
             <Search className="h-10 w-10 opacity-20" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-foreground">No discussions found</h3>
+            <h3 className="text-2xl font-bold text-foreground">{t.discussions.noDiscussions}</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
               We couldn't find any discussions matching your search. Be the first to start one!
             </p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="font-bold border-primary text-primary hover:bg-primary/5">
-            Start a new discussion
+            {t.discussions.startFirst}
           </Button>
         </div>
       ) : (

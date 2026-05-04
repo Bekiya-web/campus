@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const HeroSection = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
@@ -14,27 +16,25 @@ export const HeroSection = () => {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-[11px] font-semibold md:px-4 md:py-1.5 md:text-xs">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              One modern platform for Ethiopian universities
+              {t.home.heroSubtitle}
             </div>
             <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-4xl md:mt-5 md:text-6xl">
-              Your campus study hub,
-              <span className="text-gradient"> All IN ONE</span>.
+              {t.home.heroTitle}
             </h1>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base md:mt-5 md:text-lg">
-              Discover and share materials from 30+ universities with a professional modern interface, AI support,
-              and community collaboration.
+              {t.home.heroDescription}
             </p>
             <div className="mt-5 flex flex-col gap-2.5 sm:flex-row md:mt-8 md:gap-3">
               <Button asChild size="lg" className="btn-yellow h-11 rounded-full px-6 text-sm font-semibold md:h-11 md:px-8 md:text-base">
                 <Link to={user ? "/dashboard" : "/register"}>
-                  {user ? "Go to dashboard" : "Start for free"}
+                  {user ? t.nav.dashboard : t.common.getStarted}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-11 rounded-full px-6 text-sm font-semibold md:h-11 md:px-8 md:text-base">
                 <Link to="/materials">
                   <BookOpen className="mr-1.5 h-4 w-4" />
-                  Explore materials
+                  {t.home.exploreFeatures}
                 </Link>
               </Button>
             </div>
@@ -53,8 +53,8 @@ export const HeroSection = () => {
                 {/* Image */}
                 <img 
                   src="/new.png" 
-                  alt="EduNexus Platform" 
-                  className="w-full h-auto object-contain transition-transform durawebption-700 group-hover:scale-105"
+                  alt={t.common.appName} 
+                  className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105"
                 />
                 
                 {/* Shine effect on hover */}
@@ -65,7 +65,7 @@ export const HeroSection = () => {
               
               {/* Floating badge */}
               <div className="absolute -top-4 -right-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold animate-bounce">
-                ✨ EduNexus
+                ✨ {t.common.appName}
               </div>
               
               {/* Bottom decorative line */}

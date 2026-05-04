@@ -114,7 +114,7 @@ WHERE table_name IN ('news_posts', 'saved_news', 'news_views');
 
 ### For Users
 
-**Browse News:**
+**Browse News:**correct 
 - Visit `/news` to see all news
 - Featured news appears in carousel at top
 - Scroll through news cards

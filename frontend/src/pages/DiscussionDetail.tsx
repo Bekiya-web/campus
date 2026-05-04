@@ -221,9 +221,10 @@ const DiscussionDetail = () => {
         ? `Post hidden for ${hideDuration} hours` 
         : "Post hidden indefinitely"
       );
-    } catch (error: any) {
-      console.error('Hide post error:', error);
-      const errorMessage = error?.message || 'Failed to hide post';
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error('Hide post error:', err);
+      const errorMessage = err?.message || 'Failed to hide post';
       
       if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
         toast.error("Database not updated. Please run the migration SQL first. Check console for details.");

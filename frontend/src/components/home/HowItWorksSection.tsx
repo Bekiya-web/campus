@@ -1,15 +1,17 @@
 import { useRef } from "react";
 import { Shield } from "lucide-react";
 import { CarouselArrow } from "./CarouselArrow";
-
-const steps = [
-  { title: "Sign up free", desc: "Pick your university, department, and year." },
-  { title: "Browse or upload", desc: "Find materials for your courses or contribute your own." },
-  { title: "Earn & learn", desc: "Collect points and badges as you help others succeed." },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const HowItWorksSection = () => {
+  const { t } = useLanguage();
   const stepsScrollRef = useRef<HTMLDivElement>(null);
+
+  const steps = [
+    { title: t.home.step1Title, desc: t.home.step1Description },
+    { title: t.home.step2Title, desc: t.home.step2Description },
+    { title: t.home.step3Title, desc: t.home.step3Description },
+  ];
 
   const scrollSteps = (direction: 'left' | 'right') => {
     if (stepsScrollRef.current) {
@@ -26,9 +28,9 @@ export const HowItWorksSection = () => {
       <div className="container">
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-bold">
-            <Shield className="h-3.5 w-3.5 text-primary" /> HOW IT WORKS
+            <Shield className="h-3.5 w-3.5 text-primary" /> {t.home.howItWorksTitle}
           </div>
-          <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:mt-4 md:text-4xl">Up and running in 3 steps</h2>
+          <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:mt-4 md:text-4xl">{t.home.howItWorksSubtitle}</h2>
         </div>
         
         {/* Mobile: Carousel with Navigation Arrows */}

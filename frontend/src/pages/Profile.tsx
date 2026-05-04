@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ import { toast } from "sonner";
 
 const Profile = () => {
   const { profile, user } = useAuth();
+  const { t } = useLanguage();
   const [uploads, setUploads] = useState<Material[]>([]);
   const [bookmarks, setBookmarks] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ const Profile = () => {
     setSaving(true);
     try {
       // Only update fields that exist in the database
-      const updates: any = {
+      const updates: Record<string, string> = {
         name: editData.name,
         department: editData.department,
         year: editData.year,
@@ -115,11 +117,13 @@ const Profile = () => {
       }
       
       await updateUserProfile(profile.uid, updates);
-      toast.success("Profile updated successfully!");
+      toast.success(t.messages.profileUpdated);
       setEditMode(false);
       setTimeout(() => window.location.reload(), 800);
-    } catch (error: any) {
-      console.error("Profile update error:", error);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Profile update error:", err);
+      toast.error(err.message || "Failed to update profile");
       
       // Check if it's a column not found error
       if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
@@ -143,11 +147,13 @@ const Profile = () => {
         public_profile: settings.publicProfile,
         show_email: settings.showEmail,
       });
-      toast.success("Settings saved successfully!");
+      toast.success(t.messages.settingsSaved);
       setSettingsOpen(false);
       setTimeout(() => window.location.reload(), 800);
-    } catch (error: any) {
-      console.error("Settings update error:", error);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Settings update error:", err);
+      toast.error(err.message || "Failed to update settings");
       
       if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
         toast.error("Database schema needs updating. Please run the migration SQL.");
@@ -197,7 +203,7 @@ const Profile = () => {
           <div className="absolute top-4 right-4">
             <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30">
               <Camera className="h-4 w-4 mr-2" />
-              Change Cover
+              {t.profile.changeCover}
             </Button>
           </div>
         </div>
@@ -237,7 +243,7 @@ const Profile = () => {
                 {/* Level Badge */}
                 <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${currentLevel.color} text-white font-semibold mb-4`}>
                   <Trophy className="h-4 w-4 mr-2" />
-                  Level {currentLevel.level} — {currentLevel.name}
+                  {t.profile.level} {currentLevel.level} — {currentLevel.name}
                 </div>
 
                 {/* Quick Stats */}
@@ -261,10 +267,10 @@ const Profile = () => {
             {/* Stats Cards */}
             <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { icon: Award, label: "Points", value: profile.points, colors: "from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-800", text: "text-blue-600 dark:text-blue-400", num: "text-blue-900 dark:text-blue-100", sub: "text-blue-700 dark:text-blue-300" },
-                { icon: BookOpen, label: "Uploads", value: uploads.length, colors: "from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-800", text: "text-green-600 dark:text-green-400", num: "text-green-900 dark:text-green-100", sub: "text-green-700 dark:text-green-300" },
-                { icon: Star, label: "Bookmarks", value: bookmarks.length, colors: "from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-800", text: "text-purple-600 dark:text-purple-400", num: "text-purple-900 dark:text-purple-100", sub: "text-purple-700 dark:text-purple-300" },
-                { icon: Trophy, label: "Badges", value: profile.badges?.length || 0, colors: "from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-800", text: "text-orange-600 dark:text-orange-400", num: "text-orange-900 dark:text-orange-100", sub: "text-orange-700 dark:text-orange-300" },
+                { icon: Award, label: t.profile.points, value: profile.points, colors: "from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-800", text: "text-blue-600 dark:text-blue-400", num: "text-blue-900 dark:text-blue-100", sub: "text-blue-700 dark:text-blue-300" },
+                { icon: BookOpen, label: t.profile.uploads, value: uploads.length, colors: "from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-800", text: "text-green-600 dark:text-green-400", num: "text-green-900 dark:text-green-100", sub: "text-green-700 dark:text-green-300" },
+                { icon: Star, label: t.profile.bookmarks, value: bookmarks.length, colors: "from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-800", text: "text-purple-600 dark:text-purple-400", num: "text-purple-900 dark:text-purple-100", sub: "text-purple-700 dark:text-purple-300" },
+                { icon: Trophy, label: t.profile.badges, value: profile.badges?.length || 0, colors: "from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-800", text: "text-orange-600 dark:text-orange-400", num: "text-orange-900 dark:text-orange-100", sub: "text-orange-700 dark:text-orange-300" },
               ].map(({ icon: Icon, label, value, colors, text, num, sub }) => (
                 <motion.div key={label} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
                   <Card className={`p-4 text-center bg-gradient-to-br ${colors} shadow-sm`}>
@@ -296,28 +302,28 @@ const Profile = () => {
               <DialogTrigger asChild>
                 <Button className="flex-1 sm:flex-none">
                   <Edit3 className="h-4 w-4 mr-2" />
-                  Edit Profile
+                  {t.profile.editProfile}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Edit Profile</DialogTitle>
+                  <DialogTitle>{t.profile.editProfile}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="edit-name">Full Name</Label>
+                    <Label htmlFor="edit-name">{t.auth.fullName}</Label>
                     <Input id="edit-name" value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
                   </div>
                   <div>
-                    <Label htmlFor="edit-bio">Bio</Label>
+                    <Label htmlFor="edit-bio">{t.profile.bio}</Label>
                     <Input id="edit-bio" placeholder="Tell us about yourself..." value={editData.bio} onChange={(e) => setEditData({ ...editData, bio: e.target.value })} />
                   </div>
                   <div>
-                    <Label htmlFor="edit-department">Department</Label>
+                    <Label htmlFor="edit-department">{t.auth.department}</Label>
                     <Input id="edit-department" value={editData.department} onChange={(e) => setEditData({ ...editData, department: e.target.value })} />
                   </div>
                   <div>
-                    <Label htmlFor="edit-year">Year</Label>
+                    <Label htmlFor="edit-year">{t.auth.year}</Label>
                     <Select value={editData.year} onValueChange={(value) => setEditData({ ...editData, year: value })}>
                       <SelectTrigger id="edit-year">
                         <SelectValue />
@@ -334,9 +340,9 @@ const Profile = () => {
                   <div className="flex gap-2">
                     <Button onClick={handleSaveProfile} className="flex-1" disabled={saving}>
                       {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                      Save Changes
+                      {t.common.save}
                     </Button>
-                    <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setEditMode(false)}>{t.common.cancel}</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -347,7 +353,7 @@ const Profile = () => {
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                  {t.settings.title}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -423,7 +429,7 @@ const Profile = () => {
         <Card className="p-6">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
-            Achievements &amp; Badges
+            {t.profile.achievements}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {profile.badges.map((badge, index) => (
@@ -445,25 +451,25 @@ const Profile = () => {
         <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-none lg:flex">
           <TabsTrigger value="uploads" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
-            My Uploads ({uploads.length})
+            {t.profile.myUploads} ({uploads.length})
           </TabsTrigger>
           <TabsTrigger value="bookmarks" className="flex items-center gap-2">
             <Star className="h-4 w-4" />
-            Bookmarks ({bookmarks.length})
+            {t.profile.myBookmarks} ({bookmarks.length})
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
-            Activity
+            {t.profile.activity}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="uploads" className="space-y-4">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold">My Uploaded Materials</h3>
+              <h3 className="text-xl font-bold">{t.profile.myUploads}</h3>
               <Button size="sm" onClick={() => window.location.href = "/upload"}>
                 <BookOpen className="h-4 w-4 mr-2" />
-                Upload New
+                {t.materials.uploadMaterial}
               </Button>
             </div>
             {loading ? (
@@ -473,9 +479,9 @@ const Profile = () => {
             ) : uploads.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-gray-600 mb-2">No uploads yet</h4>
-                <p className="text-gray-500 mb-4">Share your knowledge by uploading study materials</p>
-                <Button onClick={() => window.location.href = "/upload"}>Upload Your First Material</Button>
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">{t.profile.noUploads}</h4>
+                <p className="text-gray-500 mb-4">{t.profile.uploadFirst}</p>
+                <Button onClick={() => window.location.href = "/upload"}>{t.profile.uploadFirst}</Button>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -505,7 +511,7 @@ const Profile = () => {
 
         <TabsContent value="bookmarks" className="space-y-4">
           <Card className="p-6">
-            <h3 className="text-xl font-bold mb-6">Bookmarked Materials</h3>
+            <h3 className="text-xl font-bold mb-6">{t.profile.myBookmarks}</h3>
             {loading ? (
               <div className="py-12 flex justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -513,9 +519,9 @@ const Profile = () => {
             ) : bookmarks.length === 0 ? (
               <div className="text-center py-12">
                 <Star className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-gray-600 mb-2">No bookmarks yet</h4>
-                <p className="text-gray-500 mb-4">Save materials you find useful for quick access later</p>
-                <Button variant="outline" onClick={() => window.location.href = "/materials"}>Browse Materials</Button>
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">{t.profile.noBookmarks}</h4>
+                <p className="text-gray-500 mb-4">{t.profile.bookmarkMaterials}</p>
+                <Button variant="outline" onClick={() => window.location.href = "/materials"}>{t.materials.title}</Button>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -529,7 +535,7 @@ const Profile = () => {
 
         <TabsContent value="activity" className="space-y-4">
           <Card className="p-6">
-            <h3 className="text-xl font-bold mb-6">Recent Activity</h3>
+            <h3 className="text-xl font-bold mb-6">{t.profile.recentActivity}</h3>
             {loading ? (
               <div className="py-12 flex justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -537,8 +543,8 @@ const Profile = () => {
             ) : recentActivities.length === 0 ? (
               <div className="text-center py-12">
                 <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-gray-600 mb-2">No activity yet</h4>
-                <p className="text-gray-500">Start uploading materials or bookmarking to see your activity here.</p>
+                <h4 className="text-lg font-semibold text-gray-600 mb-2">{t.profile.noActivity}</h4>
+                <p className="text-gray-500">{t.profile.startActivity}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -568,7 +574,7 @@ const Profile = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium dark:text-white truncate">
-                        {activity.type === "upload" ? "Uploaded:" : "Bookmarked:"}{" "}
+                        {activity.type === "upload" ? t.profile.uploaded : t.profile.bookmarked}:{" "}
                         <span className="font-semibold">{activity.title}</span>
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">

@@ -2,8 +2,10 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Bot, MessageCircleMore, SendHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const ProjectsSection = () => {
+  const { t } = useLanguage();
   const projectsScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollProjects = (direction: 'left' | 'right') => {
@@ -20,9 +22,9 @@ export const ProjectsSection = () => {
     <section id="projects" className="border-b border-border bg-background py-14 md:py-20">
       <div className="container">
         <div className="mb-6 text-center md:mb-8">
-          <h2 className="text-2xl font-extrabold tracking-tight md:text-4xl">Projects & Community</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-4xl">{t.home.projectsCommunity}</h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-            Modern initiatives connecting students, AI support, and collaborative learning.
+            {t.home.modernInitiatives}
           </p>
         </div>
         
@@ -47,35 +49,35 @@ export const ProjectsSection = () => {
               <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary">
                 <MessageCircleMore className="h-5 w-5 text-foreground" />
               </div>
-              <h3 className="text-lg font-extrabold md:text-2xl">Student Chat</h3>
+              <h3 className="text-lg font-extrabold md:text-2xl">{t.home.studentChat}</h3>
               <p className="mt-2 text-sm text-muted-foreground md:mt-3 md:text-base">
-                Connect with classmates, share resources, ask for exam tips, and organize course discussions.
+                {t.home.studentChatDesc}
               </p>
               <Button className="btn-yellow mt-4 md:mt-6">
                 <SendHorizontal className="h-4 w-4" />
-                Open chat experience
+                {t.home.openChat}
               </Button>
             </div>
             <div className="min-w-[85%] snap-start interactive-card rounded-xl border border-border bg-card p-5 shadow-card transition-smooth md:min-w-0 md:rounded-2xl md:p-8">
               <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary">
                 <Bot className="h-5 w-5 text-foreground" />
               </div>
-              <h3 className="text-lg font-extrabold md:text-2xl">AI Agent Assistant</h3>
+              <h3 className="text-lg font-extrabold md:text-2xl">{t.home.aiAssistant}</h3>
               <p className="mt-2 text-sm text-muted-foreground md:mt-3 md:text-base">
-                Ask questions about courses, how to upload materials, and study planning. The AI assistant is available instantly.
+                {t.home.aiAssistantDesc}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground md:mt-3 md:text-sm">Use the floating AI chat button in the bottom right corner.</p>
+              <p className="mt-2 text-xs text-muted-foreground md:mt-3 md:text-sm">{t.home.aiAssistantNote}</p>
             </div>
             <div className="min-w-[85%] snap-start interactive-card rounded-xl border border-border bg-card p-5 shadow-card transition-smooth md:min-w-0 md:rounded-2xl md:p-8">
               <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary">
                 <GraduationCap className="h-5 w-5 text-foreground" />
               </div>
-              <h3 className="text-lg font-extrabold md:text-2xl">Campus Projects</h3>
+              <h3 className="text-lg font-extrabold md:text-2xl">{t.home.campusProjects}</h3>
               <p className="mt-2 text-sm text-muted-foreground md:mt-3 md:text-base">
-                Explore university-led project showcases, collaborative innovations, and knowledge-sharing programs.
+                {t.home.campusProjectsDesc}
               </p>
               <Button asChild variant="outline" className="mt-4 md:mt-6">
-                <Link to="/materials">Explore project resources</Link>
+                <Link to="/materials">{t.home.exploreProjects}</Link>
               </Button>
             </div>
           </div>

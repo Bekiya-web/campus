@@ -4,8 +4,10 @@ import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { UNIVERSITIES } from "@/data/universities";
 import { UniLogo } from "./UniLogo";
 import { CarouselArrow } from "./CarouselArrow";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const UniversitiesSection = () => {
+  const { t } = useLanguage();
   const universitiesScrollRef = useRef<HTMLDivElement>(null);
   const allUnisScrollRef = useRef<HTMLDivElement>(null);
   const topUnis = UNIVERSITIES.filter((u) => u.tier === "top");
@@ -70,15 +72,15 @@ export const UniversitiesSection = () => {
       <div className="container">
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-bold">
-            <MapPin className="h-3.5 w-3.5 text-primary" /> NATIONWIDE
+            <MapPin className="h-3.5 w-3.5 text-primary" /> {t.home.nationwide}
           </div>
-          <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:mt-4 md:text-4xl">Featured universities</h2>
+          <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:mt-4 md:text-4xl">{t.home.featuredUniversities}</h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-            Click any university to explore their materials
+            {t.home.clickUniversity}
           </p>
           <p className="md:hidden mt-2 text-xs text-muted-foreground flex items-center justify-center gap-1">
             <ChevronLeft className="h-3 w-3 animate-pulse" />
-            Swipe to explore
+            {t.home.swipeExplore}
             <ChevronRight className="h-3 w-3 animate-pulse" />
           </p>
         </div>
@@ -217,7 +219,7 @@ export const UniversitiesSection = () => {
         </div>
 
         {/* All Universities */}
-        <h3 className="mt-10 text-center text-lg font-bold md:mt-12 md:text-xl">All universities</h3>
+        <h3 className="mt-10 text-center text-lg font-bold md:mt-12 md:text-xl">{t.home.allUniversities}</h3>
         
         <div className="relative md:hidden mt-5">
           <CarouselArrow

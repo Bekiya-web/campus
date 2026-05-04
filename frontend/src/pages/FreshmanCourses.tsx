@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { getFreshmanCourses } from "@/services/courseService";
 import { Course } from "@/services/chatService";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ const FreshmanCourses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const { t } = useLanguage();
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -49,7 +51,7 @@ const FreshmanCourses = () => {
     return (
       <div className="container py-20 flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-muted-foreground font-medium">Organizing freshman resources...</p>
+        <p className="text-muted-foreground font-medium">{t.freshman.organizingResources}</p>
       </div>
     );
   }
@@ -59,25 +61,25 @@ const FreshmanCourses = () => {
       {/* Hero Section */}
       <section className="relative mb-16 overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-secondary/10 border border-primary/10 p-8 md:p-16">
         <div className="relative z-10 max-w-3xl">
-          <Badge className="mb-4 bg-primary text-primary-foreground font-bold px-3 py-1">Year 1 Resources</Badge>
+          <Badge className="mb-4 bg-primary text-primary-foreground font-bold px-3 py-1">{t.freshman.year1Resources}</Badge>
           <h1 className="text-5xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-            Freshman <span className="text-primary">Success Hub</span>
+            {t.freshman.title.split(' ')[0]} <span className="text-primary">{t.freshman.successHub.split(' ').slice(-2).join(' ')}</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Everything you need to crush your first year. Get organized access to notes, past exams, and study materials curated for freshmen.
+            {t.freshman.crushFirstYear}
           </p>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-full border border-border/50 text-sm font-medium">
               <Users className="h-4 w-4 text-blue-500" />
-              1,000+ Students
+              {t.freshman.students}
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-full border border-border/50 text-sm font-medium">
               <FileText className="h-4 w-4 text-primary" />
-              500+ Resources
+              {t.freshman.resources}
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-full border border-border/50 text-sm font-medium">
               <MessageSquare className="h-4 w-4 text-green-500" />
-              24/7 Support
+              {t.freshman.support}
             </div>
           </div>
         </div>
@@ -91,7 +93,7 @@ const FreshmanCourses = () => {
         <Input 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Find your course by name or code..." 
+          placeholder={t.freshman.searchPlaceholder}
           className="pl-12 h-14 bg-background border-2 border-primary/10 focus:border-primary/50 text-lg rounded-2xl shadow-xl shadow-primary/5"
         />
       </div>
@@ -127,14 +129,14 @@ const FreshmanCourses = () => {
                           {course.name}
                         </h3>
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-6 flex-1">
-                          {course.description || "Access resources and discussions for this first-year course."}
+                          {course.description || t.freshman.accessResources}
                         </p>
                         
                         <div className="flex items-center justify-between pt-4 border-t border-border/50">
                           <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <FileText className="h-3.5 w-3.5" />
-                              View Resources
+                              {t.freshman.viewResources}
                             </span>
                           </div>
                           <ChevronRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -154,9 +156,9 @@ const FreshmanCourses = () => {
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-secondary-foreground mb-6">
             <GraduationCap className="h-10 w-10 opacity-20" />
           </div>
-          <h3 className="text-2xl font-bold text-foreground">Hub Currently Empty</h3>
+          <h3 className="text-2xl font-bold text-foreground">{t.freshman.hubEmpty}</h3>
           <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-            Our administrators are busy curating the best materials for your first year. Check back soon for new resources!
+            {t.freshman.checkBackSoon}
           </p>
         </div>
       )}
@@ -167,14 +169,14 @@ const FreshmanCourses = () => {
           <div className="space-y-4 text-center md:text-left">
             <h2 className="text-3xl font-extrabold flex items-center gap-2 justify-center md:justify-start">
               <Sparkles className="h-8 w-8" />
-              Need Academic Support?
+              {t.freshman.needSupport}
             </h2>
             <p className="text-primary-foreground/80 max-w-lg text-lg">
-              Our mentorship program connects freshmen with top-performing seniors for 1-on-1 guidance.
+              {t.freshman.mentorshipDesc}
             </p>
           </div>
           <Button size="lg" variant="secondary" className="font-extrabold px-8 h-14 text-primary text-lg shadow-xl">
-            Join Mentorship
+            {t.freshman.joinMentorship}
           </Button>
         </div>
         <div className="absolute top-0 left-0 h-full w-full opacity-10 pointer-events-none">

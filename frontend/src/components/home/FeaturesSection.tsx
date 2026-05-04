@@ -1,18 +1,18 @@
 import { useRef } from "react";
 import { Upload, Search, Star, BookMarked, Trophy, Users } from "lucide-react";
 import { CarouselArrow } from "./CarouselArrow";
-
-const features = [
-  { icon: Upload, title: "Upload & Share", desc: "Share notes, past exams, and study materials in seconds." },
-  { icon: Search, title: "Smart Search", desc: "Filter by university, department, year, and course." },
-  { icon: Star, title: "Community Rated", desc: "Student ratings surface the most helpful materials." },
-  { icon: BookMarked, title: "Save for Later", desc: "Bookmark materials and access them on any device." },
-  { icon: Trophy, title: "Earn Recognition", desc: "Get points and badges for contributing resources." },
-  { icon: Users, title: "Built for Ethiopia", desc: "Tailored to 30+ Ethiopian universities and their courses." },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const FeaturesSection = () => {
+  const { t } = useLanguage();
   const featuresScrollRef = useRef<HTMLDivElement>(null);
+
+  const features = [
+    { icon: Upload, title: t.home.feature1Title, desc: t.home.feature1Description },
+    { icon: Search, title: t.home.feature2Title, desc: t.home.feature2Description },
+    { icon: Star, title: t.home.feature3Title, desc: t.home.feature3Description },
+    { icon: BookMarked, title: t.home.feature4Title, desc: t.home.feature4Description },
+  ];
 
   const scrollFeatures = (direction: 'left' | 'right') => {
     if (featuresScrollRef.current) {
@@ -27,9 +27,9 @@ export const FeaturesSection = () => {
   return (
     <section className="border-b border-border bg-background py-14 md:py-20">
       <div className="container">
-        <h2 className="text-center text-2xl font-extrabold tracking-tight md:text-4xl">Platform features</h2>
+        <h2 className="text-center text-2xl font-extrabold tracking-tight md:text-4xl">{t.home.featuresTitle}</h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground md:mt-3 md:text-base">
-          Modern tools for discovery, contribution, and collaboration.
+          {t.home.featuresSubtitle}
         </p>
         
         {/* Mobile: Carousel with Navigation Arrows */}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { formatDistanceToNow } from "date-fns";
 
 const AdminDashboard = () => {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -82,8 +84,8 @@ const AdminDashboard = () => {
       <div className="container py-20">
         <Card className="max-w-md mx-auto p-8 text-center border-red-100 bg-red-50/50">
           <Shield className="h-16 w-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have permission to access the admin dashboard.</p>
+          <h2 className="text-2xl font-bold mb-2">{t.admin.accessDenied}</h2>
+          <p className="text-muted-foreground">{t.admin.noPermissionAdmin}</p>
         </Card>
       </div>
     );
@@ -93,7 +95,7 @@ const AdminDashboard = () => {
     return (
       <div className="container py-20 flex justify-center items-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <span className="ml-2 text-muted-foreground">Loading admin dashboard...</span>
+        <span className="ml-2 text-muted-foreground">{t.admin.loadingAdmin}</span>
       </div>
     );
   }
@@ -103,14 +105,14 @@ const AdminDashboard = () => {
       {/* Admin Sub-Sidebar */}
       <aside className="w-full lg:w-64 border-r border-border bg-card/50 backdrop-blur-sm p-6 space-y-6">
         <div>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Admin Menu</h2>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">{t.admin.adminMenu}</h2>
           <nav className="space-y-1">
             {[
-              { id: "overview", label: "Overview", icon: Activity },
-              { id: "pending", label: "Pending Review", icon: Clock, count: pendingMaterials.length },
-              { id: "users", label: "Users Management", icon: Users },
-              { id: "materials", label: "Approved Content", icon: FileText },
-              { id: "requests", label: "Feature Requests", icon: Shield },
+              { id: "overview", label: t.admin.overview, icon: Activity },
+              { id: "pending", label: t.admin.pendingReview, icon: Clock, count: pendingMaterials.length },
+              { id: "users", label: t.admin.usersManagement, icon: Users },
+              { id: "materials", label: t.admin.approvedContent, icon: FileText },
+              { id: "requests", label: t.admin.featureRequests, icon: Shield },
             ].map((item) => (
               <button
                 key={item.id}
@@ -142,7 +144,7 @@ const AdminDashboard = () => {
         <div className="pt-6 border-t border-border/50">
           <Button variant="outline" onClick={refetch} className="w-full justify-start gap-2 h-11 rounded-xl">
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-            Sync Data
+            {t.admin.syncData}
           </Button>
         </div>
       </aside>
@@ -160,19 +162,19 @@ const AdminDashboard = () => {
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('_', ' ')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              System administration and management tools
+              {t.admin.systemTools}
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               <Button asChild size="sm" className="bg-primary hover:bg-primary/90 font-bold">
                 <Link to="/freshman-upload">
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload Freshman Material
+                  {t.admin.uploadFreshmanMaterial}
                 </Link>
               </Button>
               <Button asChild variant="outline" size="sm" className="font-bold border-primary/20 text-primary">
                 <Link to="/upload">
                   <Plus className="h-4 w-4 mr-2" />
-                  General Upload
+                  {t.admin.generalUpload}
                 </Link>
               </Button>
             </div>
@@ -193,7 +195,7 @@ const AdminDashboard = () => {
                 <Card className="p-6 border-border bg-card/30">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <Activity className="h-5 w-5 text-primary" />
-                    System Pulse
+                    {t.admin.systemPulse}
                   </h3>
                   <div className="space-y-4">
                     {recentActivity.map((item) => (
@@ -214,7 +216,7 @@ const AdminDashboard = () => {
                 <Card className="p-6 border-border bg-card/30">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <Shield className="h-5 w-5 text-primary" />
-                    Security & Health
+                    {t.admin.securityHealth}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-primary/5 rounded-2xl border border-primary/10">
@@ -222,7 +224,7 @@ const AdminDashboard = () => {
                         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                           <Users className="h-4 w-4" />
                         </div>
-                        <span className="font-semibold">Active Students</span>
+                        <span className="font-semibold">{t.admin.activeStudents}</span>
                       </div>
                       <span className="text-xl font-black text-primary">{users.filter(u => u.role !== 'admin').length}</span>
                     </div>
@@ -231,7 +233,7 @@ const AdminDashboard = () => {
                         <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600">
                           <FileText className="h-4 w-4" />
                         </div>
-                        <span className="font-semibold">Total Resources</span>
+                        <span className="font-semibold">{t.admin.totalResources}</span>
                       </div>
                       <span className="text-xl font-black text-green-600">{materials.length}</span>
                     </div>
@@ -240,7 +242,7 @@ const AdminDashboard = () => {
                         <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
                           <Clock className="h-4 w-4" />
                         </div>
-                        <span className="font-semibold">Queue Size</span>
+                        <span className="font-semibold">{t.admin.queueSize}</span>
                       </div>
                       <span className="text-xl font-black text-orange-600">{pendingMaterials.length}</span>
                     </div>
@@ -255,8 +257,8 @@ const AdminDashboard = () => {
               {pendingMaterials.length === 0 ? (
                 <div className="py-20 text-center bg-muted/20 rounded-3xl border-2 border-dashed border-border">
                   <CheckCircle className="h-12 w-12 text-green-500/20 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold">Queue Empty</h3>
-                  <p className="text-muted-foreground mt-1">No materials awaiting review at this time.</p>
+                  <h3 className="text-xl font-bold">{t.admin.queueEmpty}</h3>
+                  <p className="text-muted-foreground mt-1">{t.admin.noMaterialsReview}</p>
                 </div>
               ) : (
                 pendingMaterials.map((m) => (
@@ -265,7 +267,7 @@ const AdminDashboard = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Badge className="bg-primary/10 text-primary border-primary/20">{m.course}</Badge>
-                          <Badge variant="outline">{m.year === '1' ? 'Freshman' : `Year ${m.year}`}</Badge>
+                          <Badge variant="outline">{m.year === '1' ? t.nav.freshmanHub.split(' ')[0] : `${t.auth.year} ${m.year}`}</Badge>
                         </div>
                         <h4 className="font-extrabold text-xl">{m.title}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl">{m.description}</p>
@@ -273,12 +275,12 @@ const AdminDashboard = () => {
                           <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
                             {m.uploaderName?.[0]}
                           </div>
-                          <span className="text-sm font-medium text-muted-foreground">Uploaded by <span className="text-foreground">{m.uploaderName}</span></span>
+                          <span className="text-sm font-medium text-muted-foreground">{t.admin.uploadedBy} <span className="text-foreground">{m.uploaderName}</span></span>
                         </div>
                       </div>
                       <div className="flex gap-3 w-full md:w-auto">
-                        <Button onClick={() => handleApproveMaterial(m.id)} className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 font-bold h-11 px-8">Approve</Button>
-                        <Button variant="outline" onClick={() => handleRejectMaterial(m.id)} className="flex-1 md:flex-none text-red-600 border-red-200 hover:bg-red-50 font-bold h-11">Reject</Button>
+                        <Button onClick={() => handleApproveMaterial(m.id)} className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 font-bold h-11 px-8">{t.admin.approve}</Button>
+                        <Button variant="outline" onClick={() => handleRejectMaterial(m.id)} className="flex-1 md:flex-none text-red-600 border-red-200 hover:bg-red-50 font-bold h-11">{t.admin.reject}</Button>
                       </div>
                     </div>
                   </Card>

@@ -9,8 +9,10 @@ import { GraduationCap, Loader2 } from "lucide-react";
 import { registerUser, signInWithGoogle } from "@/services/authService";
 import { toast } from "sonner";
 import { UNIVERSITIES, DEPARTMENTS, YEARS } from "@/data/universities";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Register = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "", university: "", department: "", year: "" });
   const [loading, setLoading] = useState(false);
@@ -83,7 +85,7 @@ const Register = () => {
     try {
       const uni = UNIVERSITIES.find((u) => u.id === form.university);
       await registerUser({ ...form, universityName: uni?.name || form.university });
-      toast.success("Account created! Welcome to EduNexus");
+      toast.success(t.auth.registerSuccess);
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const message = getFriendlyRegisterError(err);
@@ -104,8 +106,8 @@ const Register = () => {
           <div className="h-14 w-14 rounded-2xl bg-blue-600 mx-auto mb-4 flex items-center justify-center shadow-elegant">
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground">Join EduNexus</h1>
-          <p className="text-muted-foreground mt-2">Connect with 10,000+ students from 30+ universities</p>
+          <h1 className="text-3xl font-extrabold text-foreground">{t.common.appName}</h1>
+          <p className="text-muted-foreground mt-2">{t.home.heroDescription}</p>
         </div>
 
         <Card className="p-8 shadow-card border-border">
@@ -139,7 +141,7 @@ const Register = () => {
                   />
                 </svg>
               )}
-              Sign up with Google
+              {t.auth.signInWithGoogle}
             </Button>
 
             <div className="relative">
@@ -147,29 +149,29 @@ const Register = () => {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or register with email</span>
+                <span className="bg-card px-2 text-muted-foreground">{t.auth.register} {t.auth.email}</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-foreground font-semibold text-sm">Full name</Label>
+                  <Label htmlFor="name" className="text-foreground font-semibold text-sm">{t.auth.fullName}</Label>
                   <Input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} className="h-11 text-foreground bg-background" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground font-semibold text-sm">Email</Label>
+                  <Label htmlFor="email" className="text-foreground font-semibold text-sm">{t.auth.email}</Label>
                   <Input id="email" type="email" required value={form.email} onChange={(e) => set("email", e.target.value)} className="h-11 text-foreground bg-background" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground font-semibold text-sm">Password</Label>
+                <Label htmlFor="password" className="text-foreground font-semibold text-sm">{t.auth.password}</Label>
                 <Input id="password" type="password" required minLength={6} value={form.password} onChange={(e) => set("password", e.target.value)} className="h-11 text-foreground bg-background" />
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground font-semibold text-sm">University</Label>
+                <Label className="text-foreground font-semibold text-sm">{t.auth.university}</Label>
                 <Select value={form.university} onValueChange={(v) => set("university", v)}>
-                  <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder="Select your university" /></SelectTrigger>
+                  <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder={t.auth.selectUniversity} /></SelectTrigger>
                   <SelectContent className="max-h-72">
                     {UNIVERSITIES.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                   </SelectContent>
@@ -177,18 +179,18 @@ const Register = () => {
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-foreground font-semibold text-sm">Department</Label>
+                  <Label className="text-foreground font-semibold text-sm">{t.auth.department}</Label>
                   <Select value={form.department} onValueChange={(v) => set("department", v)}>
-                    <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder={t.auth.selectDepartment} /></SelectTrigger>
                     <SelectContent className="max-h-72">
                       {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-foreground font-semibold text-sm">Year</Label>
+                  <Label className="text-foreground font-semibold text-sm">{t.auth.year}</Label>
                   <Select value={form.year} onValueChange={(v) => set("year", v)}>
-                    <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-foreground bg-background"><SelectValue placeholder={t.auth.selectYear} /></SelectTrigger>
                     <SelectContent>
                       {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
                     </SelectContent>
@@ -200,13 +202,13 @@ const Register = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 font-semibold text-base mt-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
               >
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Create account
+                {t.auth.createAccount}
               </Button>
             </form>
           </div>
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 font-semibold hover:underline">Log in</Link>
+            {t.auth.alreadyHaveAccount}{" "}
+            <Link to="/login" className="text-blue-600 font-semibold hover:underline">{t.auth.login}</Link>
           </p>
         </Card>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const FreshmanUpload = () => {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [file, setFile] = useState<File | null>(null);
@@ -36,16 +38,16 @@ const FreshmanUpload = () => {
       <div className="container max-w-2xl py-20">
         <Card className="p-8 text-center border-red-200 bg-red-50/50">
           <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-red-900 mb-2">Admin Access Only</h2>
+          <h2 className="text-2xl font-bold text-red-900 mb-2">{t.freshman.adminAccessOnly}</h2>
           <p className="text-red-700 mb-6">
-            Only administrators can upload materials to the Freshman Hub.
+            {t.freshman.onlyAdminsCanUpload}
           </p>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => navigate('/upload')} variant="outline">
-              Upload General Material
+              {t.freshman.uploadGeneralMaterial}
             </Button>
             <Button onClick={() => navigate('/dashboard')}>
-              Go to Dashboard
+              {t.freshman.goToDashboard}
             </Button>
           </div>
         </Card>
@@ -126,14 +128,14 @@ const FreshmanUpload = () => {
             <GraduationCap className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground">Upload Freshman Material</h1>
-            <p className="text-sm text-muted-foreground">Year 1 resources for the Freshman Hub</p>
+            <h1 className="text-3xl font-extrabold text-foreground">{t.freshman.uploadFreshmanMaterial}</h1>
+            <p className="text-sm text-muted-foreground">{t.freshman.year1ResourcesFor}</p>
           </div>
         </div>
         <Alert className="border-blue-200 bg-blue-50/50">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-900 text-sm">
-            Materials uploaded here will appear in the <strong>Freshman Courses</strong> page, organized by course.
+            {t.freshman.materialsWillAppear}
           </AlertDescription>
         </Alert>
       </div>
@@ -142,7 +144,7 @@ const FreshmanUpload = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* File drop */}
           <div>
-            <Label className="mb-2 block text-foreground font-semibold text-sm">PDF file *</Label>
+            <Label className="mb-2 block text-foreground font-semibold text-sm">{t.freshman.pdfFile} *</Label>
             <label className="block border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-smooth cursor-pointer">
               <input type="file" accept="application/pdf" hidden onChange={(e) => handleFile(e.target.files?.[0] || null)} />
               {file ? (
@@ -156,30 +158,30 @@ const FreshmanUpload = () => {
               ) : (
                 <>
                   <UploadIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm font-semibold text-foreground">Click to choose a PDF</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDFs only · Max 20MB</p>
+                  <p className="text-sm font-semibold text-foreground">{t.freshman.clickToChoose}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.freshman.pdfOnly}</p>
                 </>
               )}
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-foreground font-semibold text-sm">Title *</Label>
+            <Label className="text-foreground font-semibold text-sm">{t.freshman.titleRequired}</Label>
             <Input 
               value={form.title} 
               onChange={(e) => set("title", e.target.value)} 
-              placeholder="e.g. Introduction to Programming - Lecture Notes" 
+              placeholder={t.freshman.exampleTitle}
               required 
               className="h-11 text-foreground" 
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-foreground font-semibold text-sm">Description</Label>
+            <Label className="text-foreground font-semibold text-sm">{t.freshman.descriptionLabel}</Label>
             <Textarea 
               value={form.description} 
               onChange={(e) => set("description", e.target.value)} 
-              placeholder="Brief description of the material content..." 
+              placeholder={t.freshman.briefDescription}
               rows={3} 
               className="text-foreground" 
             />
@@ -187,10 +189,10 @@ const FreshmanUpload = () => {
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">University *</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.freshman.universityRequired}</Label>
               <Select value={form.university} onValueChange={(v) => set("university", v)}>
                 <SelectTrigger className="h-11 text-foreground">
-                  <SelectValue placeholder="Select university" />
+                  <SelectValue placeholder={t.freshman.selectUniversity} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {UNIVERSITIES.map((u) => (
@@ -203,11 +205,11 @@ const FreshmanUpload = () => {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">Course *</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.freshman.courseRequired}</Label>
               <Input 
                 value={form.course} 
                 onChange={(e) => set("course", e.target.value)} 
-                placeholder="e.g. Introduction to Programming" 
+                placeholder={t.freshman.exampleCourse}
                 required 
                 className="h-11 text-foreground" 
               />
@@ -218,12 +220,12 @@ const FreshmanUpload = () => {
             <div className="flex items-start gap-3">
               <GraduationCap className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Freshman Hub Upload</p>
+                <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">{t.freshman.freshmanHubUpload}</p>
                 <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
-                  <li>• Automatically set to <strong>Year 1</strong></li>
-                  <li>• Department set to <strong>General</strong></li>
-                  <li>• Will appear in Freshman Courses page</li>
-                  <li>• Organized by course code</li>
+                  <li>• {t.freshman.autoSetYear1}</li>
+                  <li>• {t.freshman.deptSetGeneral}</li>
+                  <li>• {t.freshman.willAppearInCourses}</li>
+                  <li>• {t.freshman.organizedByCourse}</li>
                 </ul>
               </div>
             </div>
@@ -232,7 +234,7 @@ const FreshmanUpload = () => {
           {loading && progress > 0 && (
             <div className="space-y-2">
               <Progress value={progress} className="[&>div]:bg-blue-600" />
-              <p className="text-xs text-muted-foreground">Uploading… {Math.round(progress)}%</p>
+              <p className="text-xs text-muted-foreground">{t.freshman.uploading} {Math.round(progress)}%</p>
             </div>
           )}
 
@@ -243,7 +245,7 @@ const FreshmanUpload = () => {
               onClick={() => navigate('/upload')}
               className="flex-1"
             >
-              Upload General Material Instead
+              {t.freshman.uploadGeneralInstead}
             </Button>
             <Button
               type="submit" 
@@ -253,12 +255,12 @@ const FreshmanUpload = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
-                  Uploading…
+                  {t.freshman.uploading}
                 </>
               ) : (
                 <>
                   <GraduationCap className="h-4 w-4 mr-2" />
-                  Upload to Freshman Hub
+                  {t.freshman.uploadToHub}
                 </>
               )}
             </Button>

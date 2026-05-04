@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const gradingData = [
   { range: '90-100', grade: 'A+', points: '4.0', color: 'from-green-500 to-emerald-600' },
@@ -17,12 +18,14 @@ const gradingData = [
 ];
 
 export const GradingScale = () => {
+  const { t } = useLanguage();
+  
   return (
     <Card className="border-0 shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
         <h3 className="text-white font-black flex items-center gap-2">
           <Target className="h-5 w-5" />
-          Grading Scale
+          {t.gpa.gradingScale}
         </h3>
       </div>
       <div className="p-4 space-y-2">

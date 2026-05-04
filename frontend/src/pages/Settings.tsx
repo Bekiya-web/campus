@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,17 @@ import {
   ArrowLeft,
   Trash2,
   Download,
-  ChevronRight
+  ChevronRight,
+  Smartphone,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { updateUserProfile } from "@/services/authService";
+import { updateUserProfile, changePassword, enrollMFA, verifyMFA, unenrollMFA, listMFAFactors } from "@/services/authService";
 
 export default function Settings() {
   const { profile, user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,6 +58,14 @@ export default function Settings() {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+  });
+
+  const [twoFactorState, setTwoFactorState] = useState({
+    isEnabled: false,
+    isEnrolling: false,
+    qrCode: "",
+    secret: "",
+    verificationCode: "",
   });
 
   const [preferences, setPreferences] = useState({
@@ -111,7 +124,7 @@ export default function Settings() {
     setSaving(true);
     try {
       // Only update fields that exist in the database
-      const updates: any = {
+      const updates: Record<string, string> = {
         name: profileData.name,
         department: profileData.department,
         year: profileData.year,
@@ -125,8 +138,9 @@ export default function Settings() {
       await updateUserProfile(profile.uid, updates);
       toast.success("Profile updated successfully!");
       setTimeout(() => window.location.reload(), 1000);
-    } catch (error: any) {
-      console.error("Profile update error:", error);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Profile update error:", err);
       
       // Check if it's a column not found error
       if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
@@ -152,8 +166,9 @@ export default function Settings() {
       localStorage.setItem("edunexus_notifications", JSON.stringify(notifications));
       toast.success("Notification preferences saved!");
       setTimeout(() => window.location.reload(), 800);
-    } catch (error: any) {
-      console.error("Notifications update error:", error);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Notifications update error:", err);
       
       if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
         toast.error("Database schema needs updating. Please run the migration SQL.");
@@ -166,7 +181,11 @@ export default function Settings() {
     }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
+    if (!security.newPassword || !security.confirmPassword) {
+      toast.error("Please fill in all password fields!");
+      return;
+    }
     if (security.newPassword !== security.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -175,9 +194,115 @@ export default function Settings() {
       toast.error("Password must be at least 6 characters!");
       return;
     }
-    toast.success("Password changed successfully!");
-    setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    
+    setSaving(true);
+    try {
+      await changePassword(security.newPassword);
+      toast.success("Password changed successfully!");
+      setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Password change error:", err);
+      toast.error(err.message || "Failed to change password. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleEnableMFA = async () => {
+    setSaving(true);
+    try {
+      const { id, totp } = await enrollMFA();
+      setTwoFactorState({
+        ...twoFactorState,
+        isEnrolling: true,
+        qrCode: totp.qr_code,
+        secret: totp.secret,
+      });
+      toast.success("Scan the QR code with your authenticator app");
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("MFA enrollment error:", err);
+      toast.error(err.message || "Failed to enable 2FA. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleVerifyMFA = async () => {
+    if (!twoFactorState.verificationCode || twoFactorState.verificationCode.length !== 6) {
+      toast.error("Please enter a valid 6-digit code");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const factors = await listMFAFactors();
+      const factor = factors.totp?.[0];
+      
+      if (!factor) {
+        throw new Error("No MFA factor found");
+      }
+
+      await verifyMFA(factor.id, twoFactorState.verificationCode);
+      
+      setTwoFactorState({
+        isEnabled: true,
+        isEnrolling: false,
+        qrCode: "",
+        secret: "",
+        verificationCode: "",
+      });
+      
+      toast.success("Two-Factor Authentication enabled successfully!");
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("MFA verification error:", err);
+      toast.error(err.message || "Invalid code. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisableMFA = async () => {
+    setSaving(true);
+    try {
+      const factors = await listMFAFactors();
+      const factor = factors.totp?.[0];
+      
+      if (factor) {
+        await unenrollMFA(factor.id);
+        setTwoFactorState({
+          isEnabled: false,
+          isEnrolling: false,
+          qrCode: "",
+          secret: "",
+          verificationCode: "",
+        });
+        toast.success("Two-Factor Authentication disabled");
+      }
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("MFA disable error:", err);
+      toast.error(err.message || "Failed to disable 2FA. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
+
+  // Check if 2FA is already enabled on component mount
+  useEffect(() => {
+    listMFAFactors().then((factors) => {
+      if (factors.totp && factors.totp.length > 0) {
+        setTwoFactorState(prev => ({ ...prev, isEnabled: true }));
+      }
+    }).catch(console.error);
+  }, []);
 
   const handleSavePreferences = async () => {
     if (!user || !profile) return;
@@ -194,8 +319,9 @@ export default function Settings() {
       localStorage.setItem("edunexus_preferences", JSON.stringify(preferences));
       toast.success("Preferences saved!");
       setTimeout(() => window.location.reload(), 800);
-    } catch (error: any) {
-      console.error("Preferences update error:", error);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Preferences update error:", err);
       
       if (error?.message?.includes("Could not find") || error?.message?.includes("column")) {
         toast.error("Database schema needs updating. Please run the migration SQL.");
@@ -209,10 +335,10 @@ export default function Settings() {
   };
 
   const menuItems = [
-    { id: "profile", label: "Profile", icon: User, description: "Manage your personal information" },
-    { id: "notifications", label: "Notifications", icon: Bell, description: "Configure notification preferences" },
-    { id: "security", label: "Security", icon: Shield, description: "Password and security settings" },
-    { id: "preferences", label: "Preferences", icon: Palette, description: "Customize your experience" },
+    { id: "profile", label: t.settings.profile, icon: User, description: "Manage your personal information" },
+    { id: "notifications", label: t.settings.notifications, icon: Bell, description: "Configure notification preferences" },
+    { id: "security", label: t.settings.security, icon: Shield, description: "Password and security settings" },
+    { id: "preferences", label: t.settings.preferences, icon: Palette, description: "Customize your experience" },
   ];
 
   if (!profile) {
@@ -233,9 +359,9 @@ export default function Settings() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Profile
           </Button>
-          <h1 className="text-2xl font-bold">Settings</h1>
+          <h1 className="text-2xl font-bold">{t.settings.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your account, preferences, and security
+            {t.settings.managePassword}
           </p>
         </div>
       </div>
@@ -301,9 +427,9 @@ export default function Settings() {
             {activeSection === "profile" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Profile Information</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t.settings.profileInformation}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Update your personal information and manage your account
+                    {t.settings.updatePersonalInfo}
                   </p>
                 </div>
 
@@ -383,8 +509,8 @@ export default function Settings() {
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Public Profile</h4>
-                        <p className="text-sm text-muted-foreground">Allow others to view your profile</p>
+                        <h4 className="font-medium">{t.settings.publicProfile}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.allowOthersView}</p>
                       </div>
                       <Switch
                         checked={preferences.publicProfile}
@@ -398,8 +524,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Show Activity</h4>
-                        <p className="text-sm text-muted-foreground">Display your recent activity publicly</p>
+                        <h4 className="font-medium">{t.settings.showActivity}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.displayActivity}</p>
                       </div>
                       <Switch
                         checked={preferences.showActivity}
@@ -413,8 +539,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Show Email Publicly</h4>
-                        <p className="text-sm text-muted-foreground">Display your email address on your profile</p>
+                        <h4 className="font-medium">{t.settings.showEmail}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.showEmailProfile}</p>
                       </div>
                       <Switch
                         checked={preferences.showEmail}
@@ -447,8 +573,8 @@ export default function Settings() {
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
-                        <h4 className="font-medium">Export Your Data</h4>
-                        <p className="text-sm text-muted-foreground">Download a copy of your account data</p>
+                        <h4 className="font-medium">{t.settings.exportData}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.downloadCopy}</p>
                       </div>
                       <Button variant="outline" size="sm" onClick={handleExportData} className="w-full sm:w-auto">
                         <Download className="h-4 w-4 mr-2" />
@@ -460,8 +586,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
-                        <h4 className="font-medium text-destructive">Delete Account</h4>
-                        <p className="text-sm text-muted-foreground">Permanently delete your account and all data</p>
+                        <h4 className="font-medium text-destructive">{t.settings.deleteAccount}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.permanentlyDelete}</p>
                       </div>
                       <Button variant="destructive" size="sm" onClick={handleDeleteAccount} className="w-full sm:w-auto">
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -476,9 +602,9 @@ export default function Settings() {
             {activeSection === "notifications" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Notification Preferences</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t.settings.notificationPreferences}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Choose how you want to be notified about updates
+                    {t.settings.chooseNotifications}
                   </p>
                 </div>
 
@@ -486,8 +612,8 @@ export default function Settings() {
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Email Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                        <h4 className="font-medium">{t.settings.emailNotifications}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.newMaterials}</p>
                       </div>
                       <Switch
                         checked={notifications.emailNotifications}
@@ -501,8 +627,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Push Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Receive push notifications in browser</p>
+                        <h4 className="font-medium">{t.settings.pushNotifications}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.newMaterials}</p>
                       </div>
                       <Switch
                         checked={notifications.pushNotifications}
@@ -516,8 +642,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Material Updates</h4>
-                        <p className="text-sm text-muted-foreground">Get notified about new materials</p>
+                        <h4 className="font-medium">{t.settings.materialUpdates}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.newMaterials}</p>
                       </div>
                       <Switch
                         checked={notifications.materialUpdates}
@@ -531,8 +657,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">New Messages</h4>
-                        <p className="text-sm text-muted-foreground">Get notified about new messages</p>
+                        <h4 className="font-medium">{t.settings.newMessages}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.newMaterials}</p>
                       </div>
                       <Switch
                         checked={notifications.newMessages}
@@ -546,8 +672,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Weekly Digest</h4>
-                        <p className="text-sm text-muted-foreground">Receive weekly summary emails</p>
+                        <h4 className="font-medium">{t.settings.weeklyDigest}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.newMaterials}</p>
                       </div>
                       <Switch
                         checked={notifications.weeklyDigest}
@@ -580,9 +706,9 @@ export default function Settings() {
             {activeSection === "security" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Security Settings</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t.settings.securitySettings}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Manage your password and security preferences
+                    {t.settings.managePassword}
                   </p>
                 </div>
 
@@ -628,28 +754,166 @@ export default function Settings() {
                       />
                     </div>
 
-                    <Button onClick={handleChangePassword} className="w-full sm:w-auto">
-                      <Lock className="h-4 w-4 mr-2" />
-                      Change Password
+                    <Button onClick={handleChangePassword} disabled={saving} className="w-full sm:w-auto">
+                      {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Changing...
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Change Password
+                        </>
+                      )}
                     </Button>
                   </div>
                 </Card>
 
                 <Card className="p-4 sm:p-6">
-                  <h3 className="text-lg font-semibold mb-4">Two-Factor Authentication</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t.settings.twoFactorAuth}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Add an extra layer of security to your account
+                    {t.settings.addExtraSecurity}
                   </p>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Enable 2FA
-                  </Button>
+
+                  {!twoFactorState.isEnabled && !twoFactorState.isEnrolling && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full sm:w-auto" 
+                      onClick={handleEnableMFA}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                          Setting up...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="h-4 w-4 mr-2" />
+                          Enable 2FA
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {twoFactorState.isEnrolling && (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <Smartphone className="h-4 w-4" />
+                          Step 1: Scan QR Code
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Use an authenticator app like Google Authenticator, Authy, or Microsoft Authenticator
+                        </p>
+                        {twoFactorState.qrCode && (
+                          <div className="bg-white p-4 rounded-lg inline-block">
+                            <img src={twoFactorState.qrCode} alt="2FA QR Code" className="w-48 h-48" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <h4 className="font-semibold mb-2">Or enter this code manually:</h4>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 p-2 bg-white dark:bg-gray-900 border rounded font-mono text-sm">
+                            {twoFactorState.secret}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(twoFactorState.secret)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="verification-code">Step 2: Enter Verification Code</Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            id="verification-code"
+                            placeholder="000000"
+                            maxLength={6}
+                            value={twoFactorState.verificationCode}
+                            onChange={(e) => setTwoFactorState({ 
+                              ...twoFactorState, 
+                              verificationCode: e.target.value.replace(/\D/g, '') 
+                            })}
+                            className="font-mono text-lg tracking-widest text-center"
+                          />
+                          <Button 
+                            onClick={handleVerifyMFA}
+                            disabled={saving || twoFactorState.verificationCode.length !== 6}
+                          >
+                            {saving ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                Verifying...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Verify
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Enter the 6-digit code from your authenticator app
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setTwoFactorState({
+                          isEnabled: false,
+                          isEnrolling: false,
+                          qrCode: "",
+                          secret: "",
+                          verificationCode: "",
+                        })}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
+                  {twoFactorState.isEnabled && !twoFactorState.isEnrolling && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-semibold text-green-900 dark:text-green-100">2FA is enabled</p>
+                          <p className="text-sm text-green-700 dark:text-green-300">Your account is protected with two-factor authentication</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleDisableMFA}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Disabling...
+                          </>
+                        ) : (
+                          "Disable 2FA"
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </Card>
 
                 <Card className="p-4 sm:p-6">
-                  <h3 className="text-lg font-semibold mb-4">Active Sessions</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t.settings.activeSessions}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Manage your active sessions across devices
+                    {t.settings.manageSessions}
                   </p>
                   <div className="space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg dark:border-slate-700">
@@ -667,9 +931,9 @@ export default function Settings() {
             {activeSection === "preferences" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Preferences</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t.settings.preferences}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Customize your experience and interface
+                    {t.settings.selectLanguage}
                   </p>
                 </div>
 
@@ -678,8 +942,8 @@ export default function Settings() {
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Dark Mode</h4>
-                        <p className="text-sm text-muted-foreground">Enable dark theme</p>
+                        <h4 className="font-medium">{t.settings.darkMode}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.enableDarkTheme}</p>
                       </div>
                       <Switch
                         checked={preferences.darkMode}
@@ -699,13 +963,22 @@ export default function Settings() {
                       <select
                         id="language"
                         value={preferences.language}
-                        onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
+                        onChange={(e) => {
+                          const newLang = e.target.value;
+                          setPreferences({ ...preferences, language: newLang });
+                          // Save immediately to localStorage and apply
+                          localStorage.setItem('edunexus_language', newLang);
+                          toast.success('Language changed! Refresh the page to see changes.');
+                        }}
                         className="w-full px-3 py-2 border rounded-md dark:bg-slate-800 dark:border-slate-700"
                       >
                         <option value="en">English</option>
-                        <option value="am">Amharic (አማርኛ)</option>
-                        <option value="or">Oromo (Afaan Oromoo)</option>
+                        <option value="om">Afaan Oromoo</option>
+                        <option value="am">አማርኛ (Amharic)</option>
                       </select>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {t.settings.selectLanguage}
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -732,8 +1005,8 @@ export default function Settings() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium">Show Email on Profile</h4>
-                        <p className="text-sm text-muted-foreground">Display your email address publicly</p>
+                        <h4 className="font-medium">{t.settings.showEmailProfile}</h4>
+                        <p className="text-sm text-muted-foreground">{t.settings.showEmailProfile}</p>
                       </div>
                       <Switch
                         checked={preferences.showEmail}

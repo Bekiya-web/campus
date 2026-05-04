@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Loader2, FilterX, BookOpen, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ANY = "__any__";
 
 const Materials = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<MaterialFilters>({});
@@ -51,16 +53,16 @@ const Materials = () => {
           <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto mb-4">
             <Lock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Login Required</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-2">{t.materials.loginRequired}</h2>
           <p className="text-muted-foreground mb-6">
-            You need to create an account to access study materials
+            {t.materials.loginRequiredDesc}
           </p>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => navigate('/login')} variant="outline" className="font-semibold">
-              Log In
+              {t.materials.logIn}
             </Button>
             <Button onClick={() => navigate('/register')} className="bg-blue-600 hover:bg-blue-700 font-semibold">
-              Sign Up
+              {t.materials.signUp}
             </Button>
           </div>
         </Card>
@@ -72,9 +74,9 @@ const Materials = () => {
     <div className="container py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-foreground flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-blue-600" /> Materials
+          <BookOpen className="h-7 w-7 text-blue-600" /> {t.materials.title}
         </h1>
-        <p className="text-muted-foreground mt-1">Browse, filter, and search across all uploads</p>
+        <p className="text-muted-foreground mt-1">{t.materials.browseFilter}</p>
       </div>
 
       <div className="grid md:grid-cols-[260px_1fr] gap-6">
@@ -82,40 +84,40 @@ const Materials = () => {
         <aside className="space-y-4 md:sticky md:top-20 md:self-start">
           <div className="p-5 rounded-xl border border-border bg-card shadow-card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground">Filters</h3>
+              <h3 className="font-bold text-foreground">{t.materials.filters}</h3>
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clear} className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground">
-                  <FilterX className="h-3 w-3 mr-1" /> Clear
+                  <FilterX className="h-3 w-3 mr-1" /> {t.materials.clearFilters}
                 </Button>
               )}
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">University</label>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">{t.materials.university}</label>
                 <Select value={filters.university ?? ANY} onValueChange={(v) => set("university", v)}>
-                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder={t.common.search} /></SelectTrigger>
                   <SelectContent className="max-h-64">
-                    <SelectItem value={ANY}>Any university</SelectItem>
+                    <SelectItem value={ANY}>{t.materials.anyUniversity}</SelectItem>
                     {UNIVERSITIES.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">Department</label>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">{t.auth.department}</label>
                 <Select value={filters.department ?? ANY} onValueChange={(v) => set("department", v)}>
-                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder={t.common.search} /></SelectTrigger>
                   <SelectContent className="max-h-64">
-                    <SelectItem value={ANY}>Any department</SelectItem>
+                    <SelectItem value={ANY}>{t.materials.anyDepartment}</SelectItem>
                     {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">Year</label>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">{t.auth.year}</label>
                 <Select value={filters.year ?? ANY} onValueChange={(v) => set("year", v)}>
-                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-foreground"><SelectValue placeholder={t.common.search} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ANY}>Any year</SelectItem>
+                    <SelectItem value={ANY}>{t.materials.anyYear}</SelectItem>
                     {YEARS.filter(y => y !== "1st Year").map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -134,12 +136,12 @@ const Materials = () => {
           ) : visible.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-border rounded-xl">
               <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-muted-foreground font-medium">No materials match your filters.</p>
+              <p className="text-muted-foreground font-medium">{t.materials.noMatch}</p>
             </div>
           ) : (
             <>
               <p className="text-sm text-muted-foreground mb-4 font-medium">
-                {visible.length} result{visible.length === 1 ? "" : "s"}
+                {visible.length} {visible.length === 1 ? t.materials.result : t.materials.results}
               </p>
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {visible.map((m) => <MaterialCard key={m.id} material={m} />)}

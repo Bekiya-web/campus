@@ -7,8 +7,10 @@ import { Card } from "@/components/ui/card";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { loginUser, signInWithGoogle } from "@/services/authService";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Login = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/dashboard";
@@ -22,11 +24,11 @@ const Login = () => {
     setLoading(true);
     try {
       await loginUser(email, password);
-      toast.success("Welcome back!");
+      toast.success(t.auth.loginSuccess);
       navigate(from, { replace: true });
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || t.auth.invalidCredentials);
     } finally {
       setLoading(false);
     }
@@ -50,8 +52,8 @@ const Login = () => {
           <div className="h-14 w-14 rounded-2xl bg-blue-600 mx-auto mb-4 flex items-center justify-center shadow-elegant">
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground">Welcome back</h1>
-          <p className="text-muted-foreground mt-2">Log in to continue to EduNexus</p>
+          <h1 className="text-3xl font-extrabold text-foreground">{t.dashboard.welcome}</h1>
+          <p className="text-muted-foreground mt-2">{t.auth.login} {t.common.appName}</p>
         </div>
 
         <Card className="p-8 shadow-card border-border">
@@ -85,7 +87,7 @@ const Login = () => {
                   />
                 </svg>
               )}
-              Continue with Google
+              {t.auth.signInWithGoogle}
             </Button>
 
             <div className="relative">
@@ -93,13 +95,13 @@ const Login = () => {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or email login</span>
+                <span className="bg-card px-2 text-muted-foreground">{t.auth.email} {t.auth.login}</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground font-semibold text-sm">Email</Label>
+                <Label htmlFor="email" className="text-foreground font-semibold text-sm">{t.auth.email}</Label>
                 <Input
                   id="email" type="email" required
                   value={email} onChange={(e) => setEmail(e.target.value)}
@@ -108,7 +110,7 @@ const Login = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground font-semibold text-sm">Password</Label>
+                <Label htmlFor="password" className="text-foreground font-semibold text-sm">{t.auth.password}</Label>
                 <Input
                   id="password" type="password" required
                   value={password} onChange={(e) => setPassword(e.target.value)}
@@ -120,13 +122,13 @@ const Login = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 font-semibold text-base shadow-lg shadow-blue-500/20 transition-all active:scale-95"
               >
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Log in
+                {t.nav.logIn}
               </Button>
             </form>
           </div>
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 font-semibold hover:underline">Sign up</Link>
+            {t.auth.dontHaveAccount}{" "}
+            <Link to="/register" className="text-blue-600 font-semibold hover:underline">{t.auth.register}</Link>
           </p>
         </Card>
       </div>

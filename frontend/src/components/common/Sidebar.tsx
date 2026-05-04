@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -27,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 
 export function Sidebar() {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(window.innerWidth < 1280);
@@ -44,16 +46,16 @@ export function Sidebar() {
   const isAdmin = profile?.role === "admin";
 
   const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/materials", label: "Materials", icon: BookOpen },
-    { to: "/freshman-courses", label: "Freshman Hub", icon: GraduationCap },
-    { to: "/news", label: "News & Updates", icon: Newspaper },
-    { to: "/discussions", label: "Discussions", icon: MessageSquare },
+    { to: "/dashboard", label: t.nav.dashboard, icon: LayoutDashboard },
+    { to: "/materials", label: t.nav.materials, icon: BookOpen },
+    { to: "/freshman-courses", label: t.nav.freshmanHub, icon: GraduationCap },
+    { to: "/news", label: t.nav.news, icon: Newspaper },
+    { to: "/discussions", label: t.nav.discussions, icon: MessageSquare },
     { to: "/global-chat", label: "Global Chat", icon: Globe },
-    { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
-    { to: "/upload", label: "Upload Material", icon: Upload },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin Panel", icon: Shield, admin: true }] : []),
-    { to: "/settings", label: "Settings", icon: Settings },
+    { to: "/gpa-calculator", label: t.nav.gpaCalculator, icon: Calculator },
+    { to: "/upload", label: t.nav.upload, icon: Upload },
+    ...(isAdmin ? [{ to: "/admin", label: t.nav.admin, icon: Shield, admin: true }] : []),
+    { to: "/settings", label: t.nav.settings, icon: Settings },
   ];
 
   useEffect(() => {
@@ -200,7 +202,7 @@ export function Sidebar() {
             )}
           >
             <LogOut className="h-5 w-5" />
-            {!collapsed && <span className="font-bold">Sign Out</span>}
+            {!collapsed && <span className="font-bold">{t.nav.logout}</span>}
           </Button>
         </div>
       </motion.aside>

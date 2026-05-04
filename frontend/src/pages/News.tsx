@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   getNewsPosts, 
   getFeaturedNews, 
@@ -18,6 +19,7 @@ import { Link } from "react-router-dom";
 
 const News = () => {
   const { profile } = useAuth();
+  const { t } = useLanguage();
   const [news, setNews] = useState<NewsPost[]>([]);
   const [featuredNews, setFeaturedNews] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ const News = () => {
 
   const fetchNews = useCallback(async () => {
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (category !== 'all') filters.category = category;
       if (university !== 'all') filters.university = university;
       if (searchQuery) filters.search = searchQuery;
@@ -79,7 +81,7 @@ const News = () => {
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold text-foreground flex items-center gap-3">
             <Newspaper className="h-10 w-10 text-primary" />
-            University News
+            {t.news.title}
           </h1>
           <p className="text-muted-foreground text-lg">
             Stay updated with admissions, scholarships, events, and deadlines
@@ -90,7 +92,7 @@ const News = () => {
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 shadow-xl shadow-primary/20 gap-2">
             <Link to="/news/create">
               <Plus className="h-5 w-5" />
-              Post News
+              {t.admin.createNews}
             </Link>
           </Button>
         )}
@@ -101,7 +103,7 @@ const News = () => {
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="h-5 w-5 text-yellow-500" />
-            <h2 className="text-2xl font-bold">Featured Updates</h2>
+            <h2 className="text-2xl font-bold">{t.news.featured}</h2>
           </div>
           <FeaturedNewsCarousel news={featuredNews} />
         </div>
@@ -121,7 +123,7 @@ const News = () => {
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium">Loading news...</p>
+          <p className="text-muted-foreground font-medium">{t.common.loading}</p>
         </div>
       ) : news.length === 0 ? (
         <div className="py-20 text-center space-y-6">
@@ -129,7 +131,7 @@ const News = () => {
             <Newspaper className="h-10 w-10 opacity-20" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-foreground">No news found</h3>
+            <h3 className="text-2xl font-bold text-foreground">{t.news.noNews}</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
               We couldn't find any news matching your filters. Try adjusting your search.
             </p>

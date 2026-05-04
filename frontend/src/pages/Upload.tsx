@@ -12,9 +12,11 @@ import { UNIVERSITIES, DEPARTMENTS, YEARS } from "@/data/universities";
 import { uploadMaterial } from "@/services/uploadService";
 import { toast } from "sonner";
 import { Upload as UploadIcon, FileText, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Upload = () => {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialYear = searchParams.get('year') || profile?.year || "";
@@ -49,7 +51,7 @@ const Upload = () => {
     
     // Check if user is restricted from uploading
     if (profile?.canUpload === false) {
-      toast.error("You have been restricted from uploading materials by an administrator.");
+      toast.error(t.upload.restrictedMessage);
       return;
     }
     
@@ -79,19 +81,19 @@ const Upload = () => {
   return (
     <div className="container max-w-2xl py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-foreground">Upload Material</h1>
+        <h1 className="text-3xl font-extrabold text-foreground">{t.upload.title}</h1>
         <p className="text-muted-foreground mt-1">
-          Share a PDF with your fellow students — it will be reviewed by an admin before going public.
+          {t.upload.reviewNote}
         </p>
         {profile?.role === 'admin' && (
           <div className="mt-3 flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Want to upload Year 1 materials?</span>
+            <span className="text-muted-foreground">{t.upload.freshmanUploadLink.split('→')[0]}</span>
             <Button 
               variant="link" 
               className="h-auto p-0 text-blue-600 font-semibold"
               onClick={() => navigate('/freshman-upload')}
             >
-              Use Freshman Upload →
+              {t.upload.freshmanUploadLink.split('→')[1]} →
             </Button>
           </div>
         )}
@@ -100,7 +102,7 @@ const Upload = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* File drop */}
           <div>
-            <Label className="mb-2 block text-foreground font-semibold text-sm">PDF file</Label>
+            <Label className="mb-2 block text-foreground font-semibold text-sm">{t.upload.pdfFile}</Label>
             <label className="block border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-smooth cursor-pointer">
               <input type="file" accept="application/pdf" hidden onChange={(e) => handleFile(e.target.files?.[0] || null)} />
               {file ? (
@@ -114,45 +116,45 @@ const Upload = () => {
               ) : (
                 <>
                   <UploadIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm font-semibold text-foreground">Click to choose a PDF</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDFs only · Max 20MB</p>
+                  <p className="text-sm font-semibold text-foreground">{t.upload.clickToChoose}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.upload.pdfOnly}</p>
                 </>
               )}
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-foreground font-semibold text-sm">Title</Label>
+            <Label className="text-foreground font-semibold text-sm">{t.upload.materialTitle}</Label>
             <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Calculus II Final Exam 2023" required className="h-11 text-foreground" />
           </div>
           <div className="space-y-2">
-            <Label className="text-foreground font-semibold text-sm">Description</Label>
-            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Quick summary of what's inside..." rows={3} className="text-foreground" />
+            <Label className="text-foreground font-semibold text-sm">{t.upload.description}</Label>
+            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} placeholder={t.upload.quickSummary} rows={3} className="text-foreground" />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">University</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.auth.university}</Label>
               <Select value={form.university} onValueChange={(v) => set("university", v)}>
-                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder={t.upload.selectUniversity} /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {UNIVERSITIES.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">Department</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.upload.department}</Label>
               <Select value={form.department} onValueChange={(v) => set("department", v)}>
-                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder={t.upload.selectDepartment} /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">Year</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.upload.year}</Label>
               <Select value={form.year} onValueChange={(v) => set("year", v)}>
-                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className="h-11 text-foreground"><SelectValue placeholder={t.upload.selectYear} /></SelectTrigger>
                 <SelectContent>
                   {YEARS.filter(y => y !== "1" && y !== "1st Year").map((y) => (
                     <SelectItem key={y} value={y}>
@@ -163,7 +165,7 @@ const Upload = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold text-sm">Course</Label>
+              <Label className="text-foreground font-semibold text-sm">{t.upload.course}</Label>
               <Input value={form.course} onChange={(e) => set("course", e.target.value)} placeholder="e.g. Calculus II" required className="h-11 text-foreground" />
             </div>
           </div>
@@ -171,7 +173,7 @@ const Upload = () => {
           {loading && progress > 0 && (
             <div className="space-y-2">
               <Progress value={progress} className="[&>div]:bg-blue-600" />
-              <p className="text-xs text-muted-foreground">Uploading… {Math.round(progress)}%</p>
+              <p className="text-xs text-muted-foreground">{t.upload.uploading} {Math.round(progress)}%</p>
             </div>
           )}
 
@@ -179,7 +181,7 @@ const Upload = () => {
             type="submit" disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 font-semibold text-base"
           >
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</> : "Upload material"}
+            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t.upload.uploading}</> : t.upload.uploadButton}
           </Button>
         </form>
       </Card>

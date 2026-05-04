@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { logoutUser } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +17,13 @@ import { DesktopNav } from "./DesktopNav";
 import { UserMenu } from "./UserMenu";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { MobileMenu } from "./MobileMenu";
+import { LanguageSelector } from "./LanguageSelector";
 import { NavItem, NotificationDoc } from "@/types/navbar";
 
 export function Navbar() {
   const { user, profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState<NotificationDoc[]>([]);
@@ -51,10 +54,10 @@ export function Navbar() {
   };
 
   const navItems: NavItem[] = [
-    { to: "/", label: "Home", icon: GraduationCap },
-    { to: "/materials", label: "Materials",  icon: BookOpen        },
-    { to: "/gpa-calculator", label: "GPA Calculator", icon: Calculator },
-    { to: "/#projects", label: "Projects",   icon: Sparkles        },
+    { to: "/", label: t.nav.home, icon: GraduationCap },
+    { to: "/materials", label: t.nav.materials,  icon: BookOpen        },
+    { to: "/gpa-calculator", label: t.nav.gpaCalculator, icon: Calculator },
+    { to: "/#projects", label: t.nav.projects,   icon: Sparkles        },
   ];
 
   const navigateDashboard = () => {
@@ -100,6 +103,7 @@ export function Navbar() {
 
           {/* Right Side */}
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             <Button
               variant="ghost" size="icon"
               onClick={toggleTheme}
@@ -131,13 +135,13 @@ export function Navbar() {
                   onClick={() => navigate("/login")}
                   className="text-foreground/80 hover:text-foreground hover:bg-secondary font-semibold"
                 >
-                  Log in
+                  {t.nav.logIn}
                 </Button>
                 <Button
                   onClick={() => navigate("/register")}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6"
                 >
-                  Get Started
+                  {t.common.getStarted}
                 </Button>
               </div>
             )}
