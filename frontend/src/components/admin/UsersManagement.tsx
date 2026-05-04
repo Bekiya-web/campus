@@ -85,8 +85,12 @@ export function UsersManagement({ users, onRoleChange, onRestrictionChange, onDe
           <Card key={user.uid} className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                  {user.name?.charAt(0).toUpperCase()}
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg overflow-hidden">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -110,13 +114,68 @@ export function UsersManagement({ users, onRoleChange, onRestrictionChange, onDe
                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                          {user.name?.charAt(0).toUpperCase()}
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold overflow-hidden">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                          ) : (
+                            user.name?.charAt(0).toUpperCase()
+                          )}
                         </div>
                         {user.name}'s Profile
                       </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-6 py-4">
+                      {/* Profile Images */}
+                      {(user.avatar || user.cover_photo) && (
+                        <div>
+                          <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">Profile Images</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {user.avatar && (
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Profile Picture</Label>
+                                <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                                  <img 
+                                    src={user.avatar} 
+                                    alt={`${user.name}'s avatar`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <a 
+                                  href={user.avatar} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  View full size
+                                </a>
+                              </div>
+                            )}
+                            {user.cover_photo && (
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Cover Photo</Label>
+                                <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                                  <img 
+                                    src={user.cover_photo} 
+                                    alt={`${user.name}'s cover`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <a 
+                                  href={user.cover_photo} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  View full size
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Basic Information */}
                       <div>
                         <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">Basic Information</h4>

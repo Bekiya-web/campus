@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 import { registerUser, signInWithGoogle } from "@/services/authService";
 import { toast } from "sonner";
 import { UNIVERSITIES, DEPARTMENTS, YEARS } from "@/data/universities";
@@ -211,6 +211,20 @@ const Register = () => {
             <Link to="/login" className="text-blue-600 font-semibold hover:underline">{t.auth.login}</Link>
           </p>
         </Card>
+
+        {/* Back to Home Button */}
+        <div className="mt-6 text-center">
+          <Button
+            variant="ghost"
+            asChild
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Link to="/" className="flex items-center justify-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t.common.back} {t.nav.home}
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

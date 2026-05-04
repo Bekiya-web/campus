@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { fetchMaterialsByIds, fetchMaterialsByUser, Material } from "@/services/materialService";
 import { updateUserProfile } from "@/services/authService";
+import { uploadAvatar, uploadCoverPhoto } from "@/services/storageService";
 import { MaterialCard } from "@/components/common/MaterialCard";
 import { motion } from "framer-motion";
 import {
@@ -58,6 +59,11 @@ const Profile = () => {
     showEmail: profile?.show_email || false,
   });
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!profile) return;
     setEditData({
@@ -99,6 +105,44 @@ const Profile = () => {
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 10);
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !profile) return;
+
+    setUploadingAvatar(true);
+    try {
+      const avatarUrl = await uploadAvatar(file, user.id);
+      await updateUserProfile(profile.uid, { avatar: avatarUrl });
+      toast.success("Profile picture updated successfully!");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Avatar upload error:", err);
+      toast.error(err.message || "Failed to upload profile picture");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !profile) return;
+
+    setUploadingCover(true);
+    try {
+      const coverUrl = await uploadCoverPhoto(file, user.id);
+      await updateUserProfile(profile.uid, { cover_photo: coverUrl });
+      toast.success("Cover photo updated successfully!");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.error("Cover upload error:", err);
+      toast.error(err.message || "Failed to upload cover photo");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!user || !profile) return;
@@ -197,12 +241,41 @@ const Profile = () => {
     >
       {/* Hero Profile Section */}
       <div className="relative">
+        {/* Hidden file inputs */}
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleCoverUpload}
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarUpload}
+        />
+
         {/* Cover Image */}
         <div className={`h-48 rounded-t-3xl bg-gradient-to-r ${currentLevel.color} relative overflow-hidden`}>
+          {profile.cover_photo && (
+            <img src={profile.cover_photo} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+          )}
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute top-4 right-4">
-            <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30">
-              <Camera className="h-4 w-4 mr-2" />
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploadingCover}
+            >
+              {uploadingCover ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4 mr-2" />
+              )}
               {t.profile.changeCover}
             </Button>
           </div>
@@ -220,8 +293,17 @@ const Profile = () => {
                     {profile.name[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full h-10 w-10 p-0 shadow-lg">
-                  <Camera className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  className="absolute -bottom-2 -right-2 rounded-full h-10 w-10 p-0 shadow-lg"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
 

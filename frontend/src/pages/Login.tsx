@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 import { loginUser, signInWithGoogle } from "@/services/authService";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -131,6 +131,20 @@ const Login = () => {
             <Link to="/register" className="text-blue-600 font-semibold hover:underline">{t.auth.register}</Link>
           </p>
         </Card>
+
+        {/* Back to Home Button */}
+        <div className="mt-6 text-center">
+          <Button
+            variant="ghost"
+            asChild
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Link to="/" className="flex items-center justify-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t.common.back} {t.nav.home}
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
