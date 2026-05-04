@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Navbar } from "@/components/navbar/Navbar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
+import { OAuthRedirectHandler } from "@/components/auth/OAuthRedirectHandler";
 import { SmartAIChatWidget } from "@/components/features/SmartAIChatWidget";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
@@ -36,6 +37,7 @@ import NewsDetail from "./pages/NewsDetail";
 import CreateNews from "./pages/CreateNews";
 import EditNews from "./pages/EditNews";
 import NotFound from "./pages/NotFound.tsx";
+import AuthCallback from "./pages/AuthCallback";
 
 import { MainLayout } from "@/components/layouts/MainLayout";
 
@@ -56,11 +58,13 @@ const App = () => (
               }}
             >
             <AuthProvider>
+              <OAuthRedirectHandler />
               <MainLayout>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/materials" element={<Materials />} />
                   <Route path="/materials/:id" element={<MaterialDetail />} />
                   <Route path="/freshman-courses" element={<FreshmanCourses />} />
