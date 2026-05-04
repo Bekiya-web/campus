@@ -129,9 +129,16 @@ export async function checkDatabaseTables() {
     });
 
     // Try to get table info if possible
-    const { data: tableInfo, error: tableError } = await supabase
-      .rpc('get_table_info', { table_name: 'users' })
-      .catch(() => ({ data: null, error: { message: 'RPC not available' } }));
+    let tableInfo = null;
+    let tableError = null;
+    
+    try {
+      const result = await supabase.rpc('get_table_info', { table_name: 'users' });
+      tableInfo = result.data;
+      tableError = result.error;
+    } catch (err) {
+      tableError = { message: 'RPC not available' };
+    }
     
     console.log('🔧 Table info:', { tableInfo, tableError });
 

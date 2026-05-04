@@ -102,12 +102,12 @@ export function Navbar() {
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <LanguageSelector />
             <Button
               variant="ghost" size="icon"
               onClick={toggleTheme}
-              className="text-foreground/60 hover:text-foreground hover:bg-secondary rounded-full"
+              className="text-foreground/60 hover:text-foreground hover:bg-secondary rounded-full flex-shrink-0"
               aria-label="Toggle theme"
             >
               {theme === "dark"

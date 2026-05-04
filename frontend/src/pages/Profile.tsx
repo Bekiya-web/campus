@@ -193,7 +193,7 @@ const Profile = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container max-w-6xl py-8 space-y-8"
+      className="container max-w-6xl py-4 sm:py-8 px-2 sm:px-4 space-y-8"
     >
       {/* Hero Profile Section */}
       <div className="relative">
@@ -209,8 +209,8 @@ const Profile = () => {
         </div>
 
         {/* Profile Card */}
-        <Card className="relative -mt-16 mx-4 p-8 shadow-2xl border-white/20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-visible">
-          <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+        <Card className="relative -mt-16 mx-2 sm:mx-4 p-4 sm:p-8 shadow-2xl border-white/20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-6 sm:gap-8 w-full max-w-full">
             {/* Avatar */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               <div className="relative">
@@ -225,47 +225,47 @@ const Profile = () => {
                 </Button>
               </div>
 
-              <div className="text-center sm:text-left">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
+              <div className="text-center sm:text-left w-full">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words max-w-full">{profile.name}</h1>
                   {profile.role === "admin" && (
-                    <Badge className="bg-red-500 text-white">
+                    <Badge className="bg-red-500 text-white flex-shrink-0">
                       <Shield className="h-3 w-3 mr-1" />
                       Admin
                     </Badge>
                   )}
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-3">{profile.email}</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-3 break-all text-sm sm:text-base">{profile.email}</p>
                 {profile.bio && (
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 italic">"{profile.bio}"</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 italic break-words">"{profile.bio}"</p>
                 )}
 
                 {/* Level Badge */}
-                <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${currentLevel.color} text-white font-semibold mb-4`}>
-                  <Trophy className="h-4 w-4 mr-2" />
-                  {t.profile.level} {currentLevel.level} — {currentLevel.name}
+                <div className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-full bg-gradient-to-r ${currentLevel.color} text-white font-semibold mb-4 text-xs sm:text-sm`}>
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{t.profile.level} {currentLevel.level} — {currentLevel.name}</span>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start">
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-sm">{profile.universityName}</span>
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm truncate max-w-[150px] sm:max-w-none">{profile.universityName}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <GraduationCap className="h-4 w-4" />
-                    <span className="text-sm">{profile.department}</span>
+                    <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{profile.department}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm">{profile.year}</span>
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{profile.year}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {[
                 { icon: Award, label: t.profile.points, value: profile.points, colors: "from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-800", text: "text-blue-600 dark:text-blue-400", num: "text-blue-900 dark:text-blue-100", sub: "text-blue-700 dark:text-blue-300" },
                 { icon: BookOpen, label: t.profile.uploads, value: uploads.length, colors: "from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-800", text: "text-green-600 dark:text-green-400", num: "text-green-900 dark:text-green-100", sub: "text-green-700 dark:text-green-300" },
@@ -273,10 +273,10 @@ const Profile = () => {
                 { icon: Trophy, label: t.profile.badges, value: profile.badges?.length || 0, colors: "from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-800", text: "text-orange-600 dark:text-orange-400", num: "text-orange-900 dark:text-orange-100", sub: "text-orange-700 dark:text-orange-300" },
               ].map(({ icon: Icon, label, value, colors, text, num, sub }) => (
                 <motion.div key={label} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <Card className={`p-4 text-center bg-gradient-to-br ${colors} shadow-sm`}>
-                    <Icon className={`h-8 w-8 ${text} mx-auto mb-2`} />
-                    <div className={`text-2xl font-bold ${num}`}>{value}</div>
-                    <div className={`text-sm ${sub}`}>{label}</div>
+                  <Card className={`p-3 sm:p-4 text-center bg-gradient-to-br ${colors} shadow-sm`}>
+                    <Icon className={`h-6 w-6 sm:h-8 sm:w-8 ${text} mx-auto mb-2`} />
+                    <div className={`text-xl sm:text-2xl font-bold ${num}`}>{value}</div>
+                    <div className={`text-xs sm:text-sm ${sub} truncate`}>{label}</div>
                   </Card>
                 </motion.div>
               ))}
@@ -284,25 +284,25 @@ const Profile = () => {
           </div>
 
           {/* Progress */}
-          <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress to Next Level</span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">{profile.points} / {nextLevelPoints} pts</span>
+          <div className="mt-8 p-4 sm:p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{t.profile.progressToNext}</span>
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{profile.points} / {nextLevelPoints} pts</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              {nextLevelPoints - profile.points} more points to reach the next level!
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 break-words">
+              {nextLevelPoints - profile.points} {t.profile.morePoints}
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-full">
             {/* Edit Profile Dialog */}
             <Dialog open={editMode} onOpenChange={setEditMode}>
               <DialogTrigger asChild>
-                <Button className="flex-1 sm:flex-none">
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  {t.profile.editProfile}
+                <Button className="w-full sm:w-auto sm:flex-1 min-w-0">
+                  <Edit3 className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{t.profile.editProfile}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -351,9 +351,9 @@ const Profile = () => {
             {/* Settings Dialog */}
             <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Settings className="h-4 w-4 mr-2" />
-                  {t.settings.title}
+                <Button variant="outline" className="w-full sm:w-auto sm:flex-1 min-w-0">
+                  <Settings className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{t.settings.title}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -448,18 +448,24 @@ const Profile = () => {
 
       {/* Content Tabs */}
       <Tabs defaultValue="uploads" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-none lg:flex">
-          <TabsTrigger value="uploads" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            {t.profile.myUploads} ({uploads.length})
+        <TabsList className="grid w-full grid-cols-3 gap-1 h-auto p-1">
+          <TabsTrigger value="uploads" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm min-w-0">
+            <BookOpen className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate w-full text-center sm:text-left">
+              {t.profile.myUploads} ({uploads.length})
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="bookmarks" className="flex items-center gap-2">
-            <Star className="h-4 w-4" />
-            {t.profile.myBookmarks} ({bookmarks.length})
+          <TabsTrigger value="bookmarks" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm min-w-0">
+            <Star className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate w-full text-center sm:text-left">
+              {t.profile.myBookmarks} ({bookmarks.length})
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            {t.profile.activity}
+          <TabsTrigger value="activity" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm min-w-0">
+            <Activity className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate w-full text-center sm:text-left">
+              {t.profile.activity}
+            </span>
           </TabsTrigger>
         </TabsList>
 

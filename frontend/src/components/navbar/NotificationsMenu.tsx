@@ -43,7 +43,7 @@ export const NotificationsMenu = ({ notifications, unreadCount, onMarkRead }: No
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-foreground/60 hover:text-foreground hover:bg-secondary">
+        <Button variant="ghost" size="icon" className="relative text-foreground/60 hover:text-foreground hover:bg-secondary flex-shrink-0">
           <Bell className="h-[18px] w-[18px]" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">

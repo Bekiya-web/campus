@@ -18,11 +18,13 @@ export const UserMenu = ({ userName, userPoints, onLogout }: UserMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2 text-foreground/80 hover:text-foreground hover:bg-secondary px-2.5">
-          <div className="h-7 w-7 rounded-full bg-gradient-primary text-foreground flex items-center justify-center text-xs font-bold shadow-soft">
+        <Button variant="ghost" className="gap-2 text-foreground/80 hover:text-foreground hover:bg-secondary px-2 sm:px-2.5">
+          <div className="h-7 w-7 rounded-full bg-gradient-primary text-foreground flex items-center justify-center text-xs font-bold shadow-soft flex-shrink-0">
             {userName?.[0]?.toUpperCase() ?? "U"}
           </div>
-          <span className="text-sm font-semibold">{userName?.split(" ")[0] ?? "Profile"}</span>
+          <span className="hidden sm:inline text-sm font-semibold truncate max-w-[100px]">
+            {userName?.split(" ")[0] ?? "Profile"}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
