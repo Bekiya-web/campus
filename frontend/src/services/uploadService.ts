@@ -29,13 +29,20 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
 
   if (!p.skipCompression) {
     try {
+      // Show compressing message
+      toast.info('Compressing PDF before upload...');
+      
       compressionResult = await processFileForUpload(p.file, (progress) => {
         // Map compression progress to 0-20% of total progress
         p.onProgress?.(Math.floor(progress * 0.2));
       });
       fileToUpload = compressionResult.file;
+      
+      // Show compression complete
+      toast.success('Compression complete! Now uploading...');
     } catch (error) {
       console.warn('Compression failed, uploading original file:', error);
+      toast.warning('Compression failed. Uploading original file...');
       // Continue with original file if compression fails
     }
   }

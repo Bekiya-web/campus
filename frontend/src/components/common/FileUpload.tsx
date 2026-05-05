@@ -73,6 +73,9 @@ export function FileUpload({
       }));
 
       try {
+        // Show initial message
+        toast.info(`Processing ${file.name}...`);
+
         // Process and compress file
         const result = await processFileForUpload(
           file,
@@ -93,6 +96,9 @@ export function FileUpload({
           compressionResult: result,
           error: null,
         });
+
+        // Show success message
+        toast.success(`${file.name} ready for upload!`);
 
         onFileSelect(result.file, result);
       } catch (error) {
@@ -229,7 +235,9 @@ export function FileUpload({
               <div className="w-full max-w-xs space-y-2">
                 <Progress value={state.progress} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Processing... {state.progress}%
+                  {state.progress < 20 ? 'Validating file...' : 
+                   state.progress < 90 ? 'Compressing...' : 
+                   'Finalizing...'}
                 </p>
               </div>
             )}
@@ -289,7 +297,11 @@ export function FileUpload({
                 <Progress value={state.progress} className="h-2" />
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Processing... {state.progress}%</span>
+                  <span>
+                    {state.progress < 20 ? 'Validating...' : 
+                     state.progress < 90 ? 'Compressing...' : 
+                     'Ready!'}
+                  </span>
                 </div>
               </div>
             )}

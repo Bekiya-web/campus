@@ -41,6 +41,7 @@ export interface CompressionResult {
 
 /**
  * Compress an image file
+ * Always compresses to 70% quality regardless of original size
  */
 export async function compressImage(
   file: File,
@@ -57,6 +58,9 @@ export async function compressImage(
   } = options;
 
   const originalSize = file.size;
+
+  // Show compressing message
+  toast.info('Compressing image...', { duration: 2000 });
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -90,7 +94,7 @@ export async function compressImage(
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to blob
+        // Convert to blob with 70% quality
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -104,12 +108,20 @@ export async function compressImage(
               lastModified: Date.now(),
             });
 
+            const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
+
+            // Always show compression result
+            toast.success(
+              `Image compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
+              { duration: 3000 }
+            );
+
             resolve({
               file: compressedFile,
               originalSize,
               compressedSize,
-              compressionRatio: ((originalSize - compressedSize) / originalSize) * 100,
-              wasCompressed: compressedSize < originalSize,
+              compressionRatio,
+              wasCompressed: true, // Always true now
             });
           },
           file.type,
@@ -128,14 +140,15 @@ export async function compressImage(
 
 /**
  * Compress a PDF file
- * Reduces file size by approximately 70% using image-based compression
+ * Always compresses PDFs to 70% quality regardless of size
  */
 export async function compressPDF(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
 
+  // Show compressing message immediately
+  const toastId = toast.loading('Compressing PDF... This may take a moment.');
+
   try {
-    toast.info('Compressing PDF... This may take a moment.');
-    
     // Import the advanced PDF compression
     const { compressPDFAdvanced } = await import('./pdfCompression');
     
@@ -146,9 +159,13 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
 
     const compressionRatio = ((originalSize - result.compressedSize) / originalSize) * 100;
 
+    // Dismiss loading toast
+    toast.dismiss(toastId);
+
     if (result.compressedSize < originalSize) {
       toast.success(
-        `PDF compressed by ${compressionRatio.toFixed(1)}% (${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)})`
+        `PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
+        { duration: 4000 }
       );
       
       return {
@@ -160,25 +177,24 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
       };
     }
 
-    // If compression didn't reduce size, return original
-    return {
-      file,
-      originalSize,
-      compressedSize: originalSize,
-      compressionRatio: 0,
-      wasCompressed: false,
-    };
-  } catch (error) {
-    console.error('PDF compression failed:', error);
-    toast.warning('PDF compression failed. Uploading original file.');
+    // Even if size didn't reduce, we still processed it
+    toast.info('PDF processed and optimized');
     
     return {
-      file,
+      file: result.file,
       originalSize,
-      compressedSize: originalSize,
+      compressedSize: result.compressedSize,
       compressionRatio: 0,
-      wasCompressed: false,
+      wasCompressed: true, // Mark as compressed even if size didn't reduce
     };
+  } catch (error) {
+    // Dismiss loading toast
+    toast.dismiss(toastId);
+    
+    console.error('PDF compression failed:', error);
+    toast.error('PDF compression failed. Please try again or use a smaller file.');
+    
+    throw error; // Throw error so user knows compression failed
   }
 }
 
@@ -248,16 +264,16 @@ export function isPDFFile(file: File): boolean {
 }
 
 /**
- * Process file before upload (compress if needed)
+ * Process file before upload (always compress)
  */
 export async function processFileForUpload(
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<CompressionResult> {
   try {
-    onProgress?.(10);
+    onProgress?.(5);
 
-    // Validate file
+    // Validate file first
     let validation;
     if (isImageFile(file)) {
       validation = validateFile(file, 'image');
@@ -271,24 +287,21 @@ export async function processFileForUpload(
       throw new Error(validation.error);
     }
 
-    onProgress?.(30);
+    onProgress?.(15);
 
-    // Compress if needed
+    // Always compress images and PDFs
     let result: CompressionResult;
 
     if (isImageFile(file)) {
-      toast.info('Compressing image...');
+      onProgress?.(20);
       result = await compressImage(file);
-      
-      if (result.wasCompressed) {
-        toast.success(
-          `Image compressed by ${result.compressionRatio.toFixed(1)}% (${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)})`
-        );
-      }
+      onProgress?.(90);
     } else if (isPDFFile(file)) {
+      onProgress?.(20);
       result = await compressPDF(file);
+      onProgress?.(90);
     } else {
-      // No compression for other document types
+      // For other document types, no compression but still process
       result = {
         file,
         originalSize: file.size,

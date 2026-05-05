@@ -313,7 +313,11 @@ export function MultiFileUpload({
                       <Progress value={fileState.progress} className="h-1.5" />
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Processing... {fileState.progress}%</span>
+                        <span>
+                          {fileState.progress < 20 ? 'Validating...' : 
+                           fileState.progress < 90 ? 'Compressing...' : 
+                           'Ready!'}
+                        </span>
                       </div>
                     </div>
                   )}

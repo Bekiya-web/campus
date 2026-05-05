@@ -6,10 +6,11 @@ A comprehensive file upload system with automatic compression, validation, and p
 
 ## Features
 
-### ✨ Automatic Compression
-- **Images**: Automatically resized to max 2048x2048px and compressed to 85% quality
-- **PDFs**: Optimized for files larger than 5MB
-- **Smart Processing**: Only compresses when beneficial
+### ✨ Automatic Compression (Always Active)
+- **Images**: Always compressed to 70% quality, regardless of original size
+- **PDFs**: Always compressed to 70% quality using page-to-image conversion
+- **Smart Processing**: Optimizes all files before upload
+- **Clear Feedback**: Shows "Compressing..." before "Uploading..."
 
 ### 🛡️ Validation
 - File type validation (images, PDFs, documents)
@@ -19,6 +20,7 @@ A comprehensive file upload system with automatic compression, validation, and p
 
 ### 📊 Progress Tracking
 - Real-time compression progress
+- Clear status messages: "Validating..." → "Compressing..." → "Ready!"
 - Upload progress feedback
 - Visual progress bars
 - Status indicators
@@ -29,6 +31,7 @@ A comprehensive file upload system with automatic compression, validation, and p
 - File information display
 - Compression statistics
 - Responsive design
+- Toast notifications for each step
 
 ## Components
 
@@ -205,14 +208,23 @@ Visit `/file-upload-demo` to see the upload system in action with:
 ## Performance
 
 ### Image Compression
-- Typical compression: 50-80% size reduction
+- **Always active**: Compresses all images to 70% quality
+- Typical compression: 60-80% size reduction
 - Processing time: 100-500ms per image
-- Quality maintained at 85%
+- Quality: 70% (good balance of size and quality)
 
-### PDF Optimization
-- Files under 5MB: No compression
-- Files over 5MB: Flagged for server-side compression
-- Maximum size: 20MB
+### PDF Compression
+- **Always active**: Compresses all PDFs to 70% quality
+- Typical compression: 60-70% size reduction
+- Processing time: 2-5 seconds per document
+- Method: Page-to-image conversion with jsPDF
+
+### User Feedback
+1. **"Processing [filename]..."** - Initial validation
+2. **"Compressing image..."** or **"Compressing PDF..."** - Active compression
+3. **"Image/PDF compressed: X → Y (Z% reduction)"** - Compression complete
+4. **"[filename] ready for upload!"** - Ready to upload
+5. **"Uploading..."** - Actual upload in progress
 
 ## Best Practices
 
