@@ -15,6 +15,7 @@ import { ensureCourseExists } from "@/services/courseService";
 import { toast } from "sonner";
 import { Upload as UploadIcon, FileText, Loader2, GraduationCap, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CompressionResult, formatFileSize } from "@/utils/fileCompression";
 
 const FreshmanUpload = () => {
   const { user, profile } = useAuth();
@@ -24,6 +25,7 @@ const FreshmanUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -59,6 +61,7 @@ const FreshmanUpload = () => {
     if (!f) return;
     if (f.type !== "application/pdf") return toast.error("Only PDF files are allowed");
     if (f.size > 20 * 1024 * 1024) return toast.error("File must be under 20MB");
+    setCompressionResult(null);
     setFile(f);
   };
 
@@ -105,6 +108,7 @@ const FreshmanUpload = () => {
         uploaderName: profile?.name || user.user_metadata?.name || user.email || "Admin",
         status: "approved", // Freshman materials uploaded by admin are auto-approved
         onProgress: setProgress,
+        onCompressionComplete: setCompressionResult,
       });
 
       // Ensure the course exists in the courses table for visibility
@@ -235,6 +239,19 @@ const FreshmanUpload = () => {
             <div className="space-y-2">
               <Progress value={progress} className="[&>div]:bg-blue-600" />
               <p className="text-xs text-muted-foreground">{t.freshman.uploading} {Math.round(progress)}%</p>
+            </div>
+          )}
+
+          {compressionResult && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50/60 dark:border-blue-800 dark:bg-blue-950/30 p-3">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Compression details</p>
+              <p className="text-xs text-blue-800 dark:text-blue-300 mt-1">
+                Original: {formatFileSize(compressionResult.originalSize)} {"->"} Uploaded: {formatFileSize(compressionResult.compressedSize)}
+              </p>
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                Size change: {compressionResult.compressionRatio >= 0 ? "-" : "+"}
+                {Math.abs(compressionResult.compressionRatio).toFixed(1)}%
+              </p>
             </div>
           )}
 

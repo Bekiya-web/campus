@@ -163,83 +163,98 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
       };
     }
 
-    // Render each page to canvas and compress
-    const compressedImages: string[] = [];
-    const maxWidth = 1200; // Max width for compressed pages
-    const quality = 0.7; // 70% quality
+    // Try multiple compression levels and keep the smallest result
+    const compressionAttempts = [
+      { maxWidth: 1200, quality: 0.7 },
+      { maxWidth: 1000, quality: 0.6 },
+      { maxWidth: 850, quality: 0.5 },
+    ];
 
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 1.0 });
+    let bestFile: File | null = null;
+    let bestSize = Number.POSITIVE_INFINITY;
 
-      // Calculate scale to fit maxWidth
-      const scale = Math.min(maxWidth / viewport.width, 1.5);
-      const scaledViewport = page.getViewport({ scale });
+    for (const attempt of compressionAttempts) {
+      const compressedImages: string[] = [];
 
-      // Create canvas
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
 
-      if (!context) {
-        throw new Error('Failed to get canvas context');
+        // Scale down to target width for stronger size reduction
+        const scale = Math.min(attempt.maxWidth / viewport.width, 1.5);
+        const scaledViewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+
+        if (!context) {
+          throw new Error('Failed to get canvas context');
+        }
+
+        await page.render({
+          canvasContext: context,
+          viewport: scaledViewport,
+        }).promise;
+
+        const imageData = canvas.toDataURL('image/jpeg', attempt.quality);
+        compressedImages.push(imageData);
       }
 
-      // Render page to canvas
-      await page.render({
-        canvasContext: context,
-        viewport: scaledViewport,
-      }).promise;
+      const pdfDoc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        compress: true,
+      });
 
-      // Convert to compressed JPEG
-      const imageData = canvas.toDataURL('image/jpeg', quality);
-      compressedImages.push(imageData);
-    }
+      for (let i = 0; i < compressedImages.length; i++) {
+        if (i > 0) {
+          pdfDoc.addPage();
+        }
 
-    // Create new PDF using jsPDF
-    const pdfDoc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'px',
-      compress: true,
-    });
+        const pageWidth = pdfDoc.internal.pageSize.getWidth();
+        const pageHeight = pdfDoc.internal.pageSize.getHeight();
 
-    // Add each compressed image as a page
-    for (let i = 0; i < compressedImages.length; i++) {
-      if (i > 0) {
-        pdfDoc.addPage();
+        pdfDoc.addImage(
+          compressedImages[i],
+          'JPEG',
+          0,
+          0,
+          pageWidth,
+          pageHeight,
+          undefined,
+          'FAST'
+        );
       }
 
-      const pageWidth = pdfDoc.internal.pageSize.getWidth();
-      const pageHeight = pdfDoc.internal.pageSize.getHeight();
-      
-      // Add image with FAST compression
-      pdfDoc.addImage(
-        compressedImages[i],
-        'JPEG',
-        0,
-        0,
-        pageWidth,
-        pageHeight,
-        undefined,
-        'FAST'
-      );
+      const compressedBlob = pdfDoc.output('blob');
+      const attemptFile = new File([compressedBlob], file.name, {
+        type: 'application/pdf',
+        lastModified: Date.now(),
+      });
+
+      if (attemptFile.size < bestSize) {
+        bestSize = attemptFile.size;
+        bestFile = attemptFile;
+      }
     }
 
-    // Generate compressed PDF blob
-    const compressedBlob = pdfDoc.output('blob');
-    const compressedFile = new File([compressedBlob], file.name, {
-      type: 'application/pdf',
-      lastModified: Date.now(),
-    });
+    if (!bestFile) {
+      return {
+        file,
+        originalSize,
+        compressedSize: originalSize,
+        compressionRatio: 0,
+        wasCompressed: false,
+      };
+    }
 
-    const compressedSize = compressedFile.size;
-    const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
-
+    const compressionRatio = ((originalSize - bestSize) / originalSize) * 100;
     return {
-      file: compressedFile,
+      file: bestFile,
       originalSize,
-      compressedSize,
+      compressedSize: bestSize,
       compressionRatio,
       wasCompressed: true,
     };

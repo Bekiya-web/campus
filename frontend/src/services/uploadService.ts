@@ -17,6 +17,7 @@ export interface UploadMaterialParams {
   uploaderName: string;
   status?: "pending" | "approved" | "rejected";
   onProgress?: (pct: number) => void;
+  onCompressionComplete?: (result: CompressionResult) => void;
   skipCompression?: boolean; // Option to skip compression for PDFs
 }
 
@@ -44,16 +45,31 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
       toast.dismiss(compressToast);
       
       // Show compression result
-      if (compressionResult.wasCompressed && compressionResult.compressionRatio > 0) {
-        toast.success(`Compression complete! Reduced by ${compressionResult.compressionRatio.toFixed(1)}%`);
+      if (compressionResult.wasCompressed) {
+        if (compressionResult.compressionRatio > 0) {
+          toast.success(`Compression complete! Reduced by ${compressionResult.compressionRatio.toFixed(1)}%`);
+        } else if (compressionResult.compressionRatio < 0) {
+          toast.info(`Compression complete. Size changed by +${Math.abs(compressionResult.compressionRatio).toFixed(1)}%.`);
+        } else {
+          toast.info('Compression complete. File size remained the same.');
+        }
       } else {
-        toast.info('PDF ready for upload');
+        toast.warning('Compression could not be completed. Uploading original file.');
       }
+
+      p.onCompressionComplete?.(compressionResult);
     } catch (error) {
       console.warn('Compression failed, uploading original file:', error);
       toast.info('Uploading original file...');
       // Continue with original file if compression fails
       fileToUpload = p.file;
+      p.onCompressionComplete?.({
+        file: p.file,
+        originalSize: p.file.size,
+        compressedSize: p.file.size,
+        compressionRatio: 0,
+        wasCompressed: false,
+      });
     }
   }
 
@@ -87,7 +103,8 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
     course: p.course,
     fileURL,
     storagePath: path,
-    fileSize: p.file.size,
+    // Store the actual uploaded file size (compressed when applicable)
+    fileSize: fileToUpload.size,
     uploadedBy: p.uploadedBy,
     uploaderName: p.uploaderName,
     createdAt: new Date().toISOString(),
