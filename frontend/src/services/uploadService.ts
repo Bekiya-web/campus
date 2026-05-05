@@ -1,6 +1,7 @@
 import { awardPoints, addBadge } from "./authService";
 import { createNotification, notifyAdminsNewMaterial } from "./notificationService";
 import { supabase } from "@/integrations/supabase/client";
+import { processFileForUpload, CompressionResult } from "@/utils/fileCompression";
 
 export interface UploadMaterialParams {
   file: File;
@@ -15,14 +16,32 @@ export interface UploadMaterialParams {
   uploaderName: string;
   status?: "pending" | "approved" | "rejected";
   onProgress?: (pct: number) => void;
+  skipCompression?: boolean; // Option to skip compression for PDFs
 }
 
 export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
   if (p.file.type !== "application/pdf") throw new Error("Only PDF files are allowed");
   if (p.file.size > 25 * 1024 * 1024) throw new Error("File must be under 25MB");
 
+  // Compress/process file if not skipped
+  let fileToUpload = p.file;
+  let compressionResult: CompressionResult | null = null;
+
+  if (!p.skipCompression) {
+    try {
+      compressionResult = await processFileForUpload(p.file, (progress) => {
+        // Map compression progress to 0-20% of total progress
+        p.onProgress?.(Math.floor(progress * 0.2));
+      });
+      fileToUpload = compressionResult.file;
+    } catch (error) {
+      console.warn('Compression failed, uploading original file:', error);
+      // Continue with original file if compression fails
+    }
+  }
+
   // Sanitize filename: remove special characters and replace spaces with underscores
-  const sanitizedFileName = p.file.name
+  const sanitizedFileName = fileToUpload.name
     .replace(/[^\w\s.-]/g, '') // Remove special characters except word chars, spaces, dots, and hyphens
     .replace(/\s+/g, '_')       // Replace spaces with underscores
     .replace(/_+/g, '_');       // Replace multiple underscores with single underscore
@@ -30,7 +49,7 @@ export async function uploadMaterial(p: UploadMaterialParams): Promise<string> {
   const path = `${p.university}/${p.department}/${Date.now()}_${sanitizedFileName}`;
   p.onProgress?.(25);
 
-  const { error: uploadError } = await supabase.storage.from("materials").upload(path, p.file, {
+  const { error: uploadError } = await supabase.storage.from("materials").upload(path, fileToUpload, {
     cacheControl: "3600",
     contentType: "application/pdf",
     upsert: false,

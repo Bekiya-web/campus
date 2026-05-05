@@ -38,6 +38,7 @@ import CreateNews from "./pages/CreateNews";
 import EditNews from "./pages/EditNews";
 import NotFound from "./pages/NotFound.tsx";
 import AuthCallback from "./pages/AuthCallback";
+import FileUploadDemo from "./pages/FileUploadDemo";
 
 import { MainLayout } from "@/components/layouts/MainLayout";
 
@@ -76,6 +77,7 @@ const App = () => (
                   <Route path="/news/edit/:id" element={<ProtectedRoute><AdminRoute><EditNews /></AdminRoute></ProtectedRoute>} />
                   <Route path="/news/:id" element={<NewsDetail />} />
                   <Route path="/gpa-calculator" element={<GPACalculator />} />
+                  <Route path="/file-upload-demo" element={<FileUploadDemo />} />
                   
                   {/* Protected Routes */}
                   <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
