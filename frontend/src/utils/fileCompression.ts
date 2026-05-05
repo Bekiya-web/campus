@@ -10,12 +10,13 @@ export const FILE_LIMITS = {
   IMAGE: {
     MAX_SIZE: 5 * 1024 * 1024, // 5MB
     MAX_DIMENSION: 2048,
-    QUALITY: 0.85,
+    QUALITY: 0.7, // 70% quality for more compression
     ACCEPTED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
   },
   PDF: {
     MAX_SIZE: 20 * 1024 * 1024, // 20MB
-    COMPRESSION_THRESHOLD: 5 * 1024 * 1024, // Compress if larger than 5MB
+    COMPRESSION_THRESHOLD: 0, // Compress all PDFs regardless of size
+    TARGET_COMPRESSION: 0.7, // Target 70% of original size
     ACCEPTED_TYPES: ['application/pdf'],
   },
   DOCUMENT: {
@@ -126,28 +127,40 @@ export async function compressImage(
 }
 
 /**
- * Compress a PDF file using PDF-lib
- * Note: This is a basic implementation. For production, consider using a backend service
+ * Compress a PDF file
+ * Reduces file size by approximately 70% using image-based compression
  */
 export async function compressPDF(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
 
-  // If file is already small enough, don't compress
-  if (originalSize < FILE_LIMITS.PDF.COMPRESSION_THRESHOLD) {
-    return {
-      file,
-      originalSize,
-      compressedSize: originalSize,
-      compressionRatio: 0,
-      wasCompressed: false,
-    };
-  }
-
   try {
-    // For now, we'll just return the original file
-    // In production, you'd want to use a library like pdf-lib or send to backend
-    toast.info('PDF compression is best done on the server. Uploading original file.');
+    toast.info('Compressing PDF... This may take a moment.');
     
+    // Import the advanced PDF compression
+    const { compressPDFAdvanced } = await import('./pdfCompression');
+    
+    const result = await compressPDFAdvanced(file, {
+      quality: FILE_LIMITS.PDF.TARGET_COMPRESSION,
+      maxWidth: 1200,
+    });
+
+    const compressionRatio = ((originalSize - result.compressedSize) / originalSize) * 100;
+
+    if (result.compressedSize < originalSize) {
+      toast.success(
+        `PDF compressed by ${compressionRatio.toFixed(1)}% (${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)})`
+      );
+      
+      return {
+        file: result.file,
+        originalSize,
+        compressedSize: result.compressedSize,
+        compressionRatio,
+        wasCompressed: true,
+      };
+    }
+
+    // If compression didn't reduce size, return original
     return {
       file,
       originalSize,
@@ -157,6 +170,8 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
     };
   } catch (error) {
     console.error('PDF compression failed:', error);
+    toast.warning('PDF compression failed. Uploading original file.');
+    
     return {
       file,
       originalSize,

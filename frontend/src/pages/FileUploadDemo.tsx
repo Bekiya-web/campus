@@ -80,13 +80,14 @@ export default function FileUploadDemo() {
               <span className="text-green-600 dark:text-green-400">✓</span>
               <span>
                 <strong>Automatic Image Compression:</strong> Images are automatically resized and compressed
-                while maintaining quality (max {FILE_LIMITS.IMAGE.MAX_DIMENSION}px, {FILE_LIMITS.IMAGE.QUALITY * 100}% quality)
+                to 70% quality (max {FILE_LIMITS.IMAGE.MAX_DIMENSION}px)
               </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 dark:text-green-400">✓</span>
               <span>
-                <strong>PDF Optimization:</strong> Large PDFs are optimized before upload
+                <strong>PDF Compression:</strong> PDFs are compressed by approximately 70% using advanced
+                page-to-image conversion
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -227,18 +228,20 @@ export default function FileUploadDemo() {
             <h4 className="font-semibold">Image Compression:</h4>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
               <li>Resizes images to max {FILE_LIMITS.IMAGE.MAX_DIMENSION}x{FILE_LIMITS.IMAGE.MAX_DIMENSION}px while maintaining aspect ratio</li>
-              <li>Compresses with {FILE_LIMITS.IMAGE.QUALITY * 100}% quality using HTML5 Canvas</li>
+              <li>Compresses with 70% quality using HTML5 Canvas</li>
               <li>Supports JPEG, PNG, and WebP formats</li>
-              <li>Typically reduces file size by 50-80%</li>
+              <li>Typically reduces file size by 60-80%</li>
             </ul>
           </div>
 
           <div className="space-y-2 text-sm">
-            <h4 className="font-semibold">PDF Optimization:</h4>
+            <h4 className="font-semibold">PDF Compression:</h4>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
-              <li>Files under 5MB are uploaded as-is</li>
-              <li>Larger files are flagged for server-side compression</li>
+              <li>Converts PDF pages to compressed images (70% quality)</li>
+              <li>Recreates PDF with optimized images using jsPDF</li>
+              <li>Typically achieves 60-70% size reduction</li>
               <li>Maximum size: 20MB</li>
+              <li>Processing time depends on page count</li>
             </ul>
           </div>
 
