@@ -149,52 +149,87 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
   const toastId = toast.loading('Compressing PDF... This may take a moment.');
 
   try {
-    // Import the advanced PDF compression
-    const { compressPDFAdvanced } = await import('./pdfCompression');
-    
-    const result = await compressPDFAdvanced(file, {
-      quality: FILE_LIMITS.PDF.TARGET_COMPRESSION,
-      maxWidth: 1200,
-    });
+    // Try advanced compression first
+    try {
+      const { compressPDFAdvanced } = await import('./pdfCompression');
+      
+      const result = await compressPDFAdvanced(file, {
+        quality: FILE_LIMITS.PDF.TARGET_COMPRESSION,
+        maxWidth: 1200,
+      });
 
-    const compressionRatio = ((originalSize - result.compressedSize) / originalSize) * 100;
+      const compressionRatio = ((originalSize - result.compressedSize) / originalSize) * 100;
 
-    // Dismiss loading toast
-    toast.dismiss(toastId);
+      // Dismiss loading toast
+      toast.dismiss(toastId);
 
-    if (result.compressedSize < originalSize) {
-      toast.success(
-        `PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
-        { duration: 4000 }
-      );
+      if (result.compressedSize < originalSize) {
+        toast.success(
+          `PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
+          { duration: 4000 }
+        );
+        
+        return {
+          file: result.file,
+          originalSize,
+          compressedSize: result.compressedSize,
+          compressionRatio,
+          wasCompressed: true,
+        };
+      }
+
+      // Even if size didn't reduce, we still processed it
+      toast.info('PDF processed and optimized');
       
       return {
         file: result.file,
         originalSize,
         compressedSize: result.compressedSize,
-        compressionRatio,
+        compressionRatio: 0,
         wasCompressed: true,
       };
-    }
+    } catch (advancedError) {
+      console.warn('Advanced PDF compression not available, using simple method:', advancedError);
+      
+      // Fallback to simple compression (just re-encode the PDF)
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      
+      const processedFile = new File([blob], file.name, {
+        type: 'application/pdf',
+        lastModified: Date.now(),
+      });
 
-    // Even if size didn't reduce, we still processed it
-    toast.info('PDF processed and optimized');
-    
-    return {
-      file: result.file,
-      originalSize,
-      compressedSize: result.compressedSize,
-      compressionRatio: 0,
-      wasCompressed: true, // Mark as compressed even if size didn't reduce
-    };
+      // Dismiss loading toast
+      toast.dismiss(toastId);
+      
+      // Show info that we're using original file
+      toast.info('PDF ready for upload (compression not available in this browser)');
+      
+      return {
+        file: processedFile,
+        originalSize,
+        compressedSize: processedFile.size,
+        compressionRatio: 0,
+        wasCompressed: false,
+      };
+    }
   } catch (error) {
     // Dismiss loading toast
     toast.dismiss(toastId);
     
-    console.error('PDF compression failed:', error);
-    toast.error('PDF compression failed. Please try again or use a smaller file.');
+    console.error('PDF processing failed:', error);
     
-    throw error; // Throw error so user knows compression failed
+    // Don't throw error, just return original file
+    toast.warning('Using original PDF file');
+    
+    return {
+      file,
+      originalSize,
+      compressedSize: originalSize,
+      compressionRatio: 0,
+      wasCompressed: false,
+    };
   }
 }
 

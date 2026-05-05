@@ -51,7 +51,13 @@ export async function compressPDFAdvanced(
     onProgress?.(5);
     
     // Load PDF.js
-    const pdfjs = await loadPdfJs();
+    let pdfjs;
+    try {
+      pdfjs = await loadPdfJs();
+    } catch (error) {
+      throw new Error('Failed to load PDF processing library. Please try again or use a different browser.');
+    }
+    
     onProgress?.(10);
 
     // Load the PDF
@@ -62,50 +68,56 @@ export async function compressPDFAdvanced(
     onProgress?.(20);
 
     const numPages = pdf.numPages;
+    
+    // Limit pages for performance (max 50 pages)
+    if (numPages > 50) {
+      throw new Error('PDF has too many pages (max 50). Please use a smaller document.');
+    }
+    
     const compressedImages: string[] = [];
 
     // Process each page
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 1.0 });
+      try {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
 
-      // Calculate scale to fit maxWidth
-      const scale = maxWidth / viewport.width;
-      const scaledViewport = page.getViewport({ scale });
+        // Calculate scale to fit maxWidth
+        const scale = maxWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
 
-      // Create canvas
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
 
-      if (!context) {
-        throw new Error('Failed to get canvas context');
+        if (!context) {
+          throw new Error('Failed to get canvas context');
+        }
+
+        // Render page to canvas
+        await page.render({
+          canvasContext: context,
+          viewport: scaledViewport,
+        }).promise;
+
+        // Convert to compressed image
+        const imageData = canvas.toDataURL('image/jpeg', quality);
+        compressedImages.push(imageData);
+
+        // Update progress
+        const progress = 20 + ((pageNum / numPages) * 60);
+        onProgress?.(Math.floor(progress));
+      } catch (pageError) {
+        console.error(`Failed to process page ${pageNum}:`, pageError);
+        throw new Error(`Failed to process page ${pageNum}`);
       }
-
-      // Render page to canvas
-      await page.render({
-        canvasContext: context,
-        viewport: scaledViewport,
-      }).promise;
-
-      // Convert to compressed image
-      const imageData = canvas.toDataURL('image/jpeg', quality);
-      compressedImages.push(imageData);
-
-      // Update progress
-      const progress = 20 + ((pageNum / numPages) * 60);
-      onProgress?.(Math.floor(progress));
     }
 
     onProgress?.(85);
 
-    // Create a simple PDF-like structure
-    // Note: This creates a multi-page image document, not a true PDF
-    // For true PDF creation, you'd need jsPDF or pdf-lib
-    
-    // For now, we'll create a compressed version by reducing quality
-    // In production, use jsPDF to create a proper PDF
+    // Create compressed PDF
     const compressedBlob = await createCompressedPDF(compressedImages, quality);
     
     onProgress?.(95);
@@ -124,7 +136,8 @@ export async function compressPDFAdvanced(
     };
   } catch (error) {
     console.error('Advanced PDF compression failed:', error);
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`PDF compression failed: ${errorMessage}`);
   }
 }
 
@@ -134,8 +147,10 @@ export async function compressPDFAdvanced(
 async function createCompressedPDF(images: string[], quality: number): Promise<Blob> {
   try {
     // Dynamically import jsPDF
-    const { jsPDF } = await import('jspdf');
+    const jsPDFModule = await import('jspdf');
+    const { jsPDF } = jsPDFModule;
     
+    // Create PDF with compression enabled
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'px',
@@ -143,24 +158,22 @@ async function createCompressedPDF(images: string[], quality: number): Promise<B
     });
 
     // Add each image as a page
-    images.forEach((imageData, index) => {
-      if (index > 0) {
+    for (let i = 0; i < images.length; i++) {
+      if (i > 0) {
         pdf.addPage();
       }
 
-      const img = new Image();
-      img.src = imageData;
-      
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
-    });
+      // Add image with FAST compression for smaller file size
+      pdf.addImage(images[i], 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+    }
 
     return pdf.output('blob');
   } catch (error) {
     console.error('Failed to create PDF with jsPDF:', error);
-    throw new Error('PDF creation failed');
+    throw new Error(`PDF creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
