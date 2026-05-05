@@ -3,7 +3,7 @@
  * Handles automatic compression of images and PDFs before upload
  */
 
-import { toast } from "sonner";
+import { jsPDF } from "jspdf";
 
 // Configuration
 export const FILE_LIMITS = {
@@ -59,9 +59,6 @@ export async function compressImage(
 
   const originalSize = file.size;
 
-  // Show compressing message
-  toast.info('Compressing image...', { duration: 2000 });
-
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -110,12 +107,6 @@ export async function compressImage(
 
             const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
 
-            // Always show compression result
-            toast.success(
-              `Image compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
-              { duration: 3000 }
-            );
-
             resolve({
               file: compressedFile,
               originalSize,
@@ -139,90 +130,123 @@ export async function compressImage(
 }
 
 /**
- * Compress a PDF file
+ * Compress a PDF file using canvas-based rendering
  * Always compresses PDFs to 70% quality regardless of size
+ * Uses pdf.js from CDN to avoid bundling issues
  */
 export async function compressPDF(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
 
-  // Show compressing message immediately
-  const toastId = toast.loading('Compressing PDF... This may take a moment.');
-
   try {
-    // Try advanced compression first
-    try {
-      const { compressPDFAdvanced } = await import('./pdfCompression');
-      
-      const result = await compressPDFAdvanced(file, {
-        quality: FILE_LIMITS.PDF.TARGET_COMPRESSION,
-        maxWidth: 1200,
-      });
+    // Load pdf.js from CDN if not already loaded
+    if (!(window as any).pdfjsLib) {
+      await loadPdfJsFromCDN();
+    }
 
-      const compressionRatio = ((originalSize - result.compressedSize) / originalSize) * 100;
-
-      // Dismiss loading toast
-      toast.dismiss(toastId);
-
-      if (result.compressedSize < originalSize) {
-        toast.success(
-          `PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(result.compressedSize)} (${compressionRatio.toFixed(1)}% reduction)`,
-          { duration: 4000 }
-        );
-        
-        return {
-          file: result.file,
-          originalSize,
-          compressedSize: result.compressedSize,
-          compressionRatio,
-          wasCompressed: true,
-        };
-      }
-
-      // Even if size didn't reduce, we still processed it
-      toast.info('PDF processed and optimized');
-      
+    const pdfjsLib = (window as any).pdfjsLib;
+    
+    // Read PDF file
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    
+    const numPages = pdf.numPages;
+    
+    // Limit to 30 pages for performance
+    if (numPages > 30) {
       return {
-        file: result.file,
+        file,
         originalSize,
-        compressedSize: result.compressedSize,
-        compressionRatio: 0,
-        wasCompressed: true,
-      };
-    } catch (advancedError) {
-      console.warn('Advanced PDF compression not available, using simple method:', advancedError);
-      
-      // Fallback to simple compression (just re-encode the PDF)
-      const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      
-      const processedFile = new File([blob], file.name, {
-        type: 'application/pdf',
-        lastModified: Date.now(),
-      });
-
-      // Dismiss loading toast
-      toast.dismiss(toastId);
-      
-      // Show info that we're using original file
-      toast.info('PDF ready for upload (compression not available in this browser)');
-      
-      return {
-        file: processedFile,
-        originalSize,
-        compressedSize: processedFile.size,
+        compressedSize: originalSize,
         compressionRatio: 0,
         wasCompressed: false,
       };
     }
+
+    // Render each page to canvas and compress
+    const compressedImages: string[] = [];
+    const maxWidth = 1200; // Max width for compressed pages
+    const quality = 0.7; // 70% quality
+
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.0 });
+
+      // Calculate scale to fit maxWidth
+      const scale = Math.min(maxWidth / viewport.width, 1.5);
+      const scaledViewport = page.getViewport({ scale });
+
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+
+      if (!context) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      // Render page to canvas
+      await page.render({
+        canvasContext: context,
+        viewport: scaledViewport,
+      }).promise;
+
+      // Convert to compressed JPEG
+      const imageData = canvas.toDataURL('image/jpeg', quality);
+      compressedImages.push(imageData);
+    }
+
+    // Create new PDF using jsPDF
+    const pdfDoc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      compress: true,
+    });
+
+    // Add each compressed image as a page
+    for (let i = 0; i < compressedImages.length; i++) {
+      if (i > 0) {
+        pdfDoc.addPage();
+      }
+
+      const pageWidth = pdfDoc.internal.pageSize.getWidth();
+      const pageHeight = pdfDoc.internal.pageSize.getHeight();
+      
+      // Add image with FAST compression
+      pdfDoc.addImage(
+        compressedImages[i],
+        'JPEG',
+        0,
+        0,
+        pageWidth,
+        pageHeight,
+        undefined,
+        'FAST'
+      );
+    }
+
+    // Generate compressed PDF blob
+    const compressedBlob = pdfDoc.output('blob');
+    const compressedFile = new File([compressedBlob], file.name, {
+      type: 'application/pdf',
+      lastModified: Date.now(),
+    });
+
+    const compressedSize = compressedFile.size;
+    const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
+
+    return {
+      file: compressedFile,
+      originalSize,
+      compressedSize,
+      compressionRatio,
+      wasCompressed: true,
+    };
   } catch (error) {
-    // Dismiss loading toast
-    toast.dismiss(toastId);
+    console.error('PDF compression failed:', error);
     
-    console.error('PDF processing failed:', error);
-    
-    // Don't throw error, just return original file
-    toast.warning('Using original PDF file');
-    
+    // Return original file as fallback
     return {
       file,
       originalSize,
@@ -231,6 +255,42 @@ export async function compressPDF(file: File): Promise<CompressionResult> {
       wasCompressed: false,
     };
   }
+}
+
+/**
+ * Load pdf.js library from CDN
+ */
+async function loadPdfJsFromCDN(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if ((window as any).pdfjsLib) {
+      resolve();
+      return;
+    }
+
+    // Load pdf.js from CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.async = true;
+    
+    script.onload = () => {
+      const pdfjsLib = (window as any).pdfjsLib;
+      if (pdfjsLib) {
+        // Set worker path
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve();
+      } else {
+        reject(new Error('PDF.js failed to load'));
+      }
+    };
+    
+    script.onerror = () => {
+      reject(new Error('Failed to load PDF.js from CDN'));
+    };
+    
+    document.head.appendChild(script);
+  });
 }
 
 /**
@@ -309,7 +369,7 @@ export async function processFileForUpload(
     onProgress?.(5);
 
     // Validate file first
-    let validation;
+    let validation: { valid: boolean; error?: string };
     if (isImageFile(file)) {
       validation = validateFile(file, 'image');
     } else if (isPDFFile(file)) {

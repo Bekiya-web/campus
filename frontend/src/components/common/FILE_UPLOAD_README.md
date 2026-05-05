@@ -11,6 +11,7 @@ A comprehensive file upload system with automatic compression, validation, and p
 - **PDFs**: Always compressed to 70% quality using page-to-image conversion
 - **Smart Processing**: Optimizes all files before upload
 - **Clear Feedback**: Shows "Compressing..." before "Uploading..."
+- **No Dynamic Imports**: Uses CDN-loaded pdf.js to avoid bundling issues
 
 ### 🛡️ Validation
 - File type validation (images, PDFs, documents)
@@ -215,9 +216,12 @@ Visit `/file-upload-demo` to see the upload system in action with:
 
 ### PDF Compression
 - **Always active**: Compresses all PDFs to 70% quality
-- Typical compression: 60-70% size reduction
-- Processing time: 2-5 seconds per document
-- Method: Page-to-image conversion with jsPDF
+- **Method**: Loads pdf.js from CDN, renders pages to canvas, recreates with jsPDF
+- **Page limit**: 30 pages (for performance)
+- **Typical compression**: 60-70% size reduction
+- **Processing time**: 2-5 seconds per document
+- **Fallback**: If compression fails, uploads original file with warning
+- **No bundling issues**: pdf.js loaded from CDN at runtime
 
 ### User Feedback
 1. **"Processing [filename]..."** - Initial validation
@@ -237,10 +241,18 @@ Visit `/file-upload-demo` to see the upload system in action with:
 
 ## Troubleshooting
 
+### PDF compression not working
+- **Check browser console** for errors
+- **Ensure pdf.js CDN is accessible** (https://cdnjs.cloudflare.com)
+- **Try with smaller PDF** (< 30 pages)
+- **System will fallback** to original file if compression fails
+- **Check network** - pdf.js loads from CDN at runtime
+
 ### Image not compressing
 - Check if file is already optimized
-- Verify file type is supported
+- Verify file type is supported (JPEG, PNG, WebP)
 - Check browser console for errors
+- Ensure Canvas API is supported
 
 ### Upload failing
 - Verify file size is within limits

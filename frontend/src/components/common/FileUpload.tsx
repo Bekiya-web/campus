@@ -74,13 +74,35 @@ export function FileUpload({
 
       try {
         // Show initial message
-        toast.info(`Processing ${file.name}...`);
+        toast.info(`Validating ${file.name}...`);
+
+        // Show compressing message based on file type
+        if (isImageFile(file)) {
+          toast.info('Compressing image...', { duration: 2000 });
+        } else if (isPDFFile(file)) {
+          toast.loading('Compressing PDF... This may take a moment.', { id: 'pdf-compress' });
+        }
 
         // Process and compress file
         const result = await processFileForUpload(
           file,
           autoCompress ? (progress) => setState((prev) => ({ ...prev, progress })) : undefined
         );
+
+        // Dismiss PDF loading toast if it exists
+        if (isPDFFile(file)) {
+          toast.dismiss('pdf-compress');
+        }
+
+        // Show compression result
+        if (result.wasCompressed) {
+          toast.success(
+            `${isImageFile(result.file) ? 'Image' : 'PDF'} compressed: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)} (${result.compressionRatio.toFixed(1)}% reduction)`,
+            { duration: 3000 }
+          );
+        } else if (isPDFFile(file) && result.compressionRatio === 0) {
+          toast.warning('PDF compression skipped. Uploading original file.');
+        }
 
         // Generate preview for images
         let preview: string | null = null;

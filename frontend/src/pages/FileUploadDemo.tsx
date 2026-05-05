@@ -86,8 +86,8 @@ export default function FileUploadDemo() {
             <li className="flex items-start gap-2">
               <span className="text-green-600 dark:text-green-400">✓</span>
               <span>
-                <strong>PDF Compression:</strong> PDFs are compressed by approximately 70% using advanced
-                page-to-image conversion
+                <strong>PDF Compression:</strong> PDFs are always compressed to 70% quality using 
+                CDN-loaded pdf.js (no bundling issues, works in production)
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -237,11 +237,14 @@ export default function FileUploadDemo() {
           <div className="space-y-2 text-sm">
             <h4 className="font-semibold">PDF Compression:</h4>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
-              <li>Converts PDF pages to compressed images (70% quality)</li>
-              <li>Recreates PDF with optimized images using jsPDF</li>
+              <li>Loads pdf.js from CDN (no bundling issues)</li>
+              <li>Renders each page to canvas at 1200px max width</li>
+              <li>Converts pages to JPEG at 70% quality</li>
+              <li>Recreates PDF with compressed images using jsPDF</li>
               <li>Typically achieves 60-70% size reduction</li>
-              <li>Maximum size: 20MB</li>
-              <li>Processing time depends on page count</li>
+              <li>Maximum 30 pages (for performance)</li>
+              <li>Graceful fallback if compression fails</li>
+              <li>Processing time: 2-5 seconds for typical PDFs</li>
             </ul>
           </div>
 

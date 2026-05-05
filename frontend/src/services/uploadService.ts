@@ -2,6 +2,7 @@ import { awardPoints, addBadge } from "./authService";
 import { createNotification, notifyAdminsNewMaterial } from "./notificationService";
 import { supabase } from "@/integrations/supabase/client";
 import { processFileForUpload, CompressionResult } from "@/utils/fileCompression";
+import { toast } from "sonner";
 
 export interface UploadMaterialParams {
   file: File;
